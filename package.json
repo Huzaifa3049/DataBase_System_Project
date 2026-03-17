@@ -1,0 +1,28 @@
+{
+  "name": "db-course-project",
+  "version": "1.0.0",
+  "description": "my database course project",
+  "main": "index.js",
+  "types": "module",
+  "scripts": {
+    "dev": "nodemon .",
+    "start": "node ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^8.0.2",
+    "otp-generator": "^4.0.1",
+    "pg": "^8.11.3"
+  },
+  "type": "module",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
