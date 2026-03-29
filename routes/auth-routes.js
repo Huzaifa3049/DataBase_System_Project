@@ -3,9 +3,15 @@ import pool from '../db.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import jwToken from '../utils/jwt-helpers.js';
-import { send_and_generate_OTP, verifyOTP, storeSignupData, getSignupData } from '../utils/send_email.js'; 
-const router = express.Router();
+import { send_and_generate_OTP, verifyOTP, storeSignupData, getSignupData } from '../utils/send_email.js';
 
+
+
+
+
+
+
+const router = express.Router();
 const HTML_LOGIN = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,7 +63,15 @@ const HTML_LOGIN = `<!DOCTYPE html>
         try {
             const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
             const data = await res.json();
-            res.ok ? showMessage('Login successful! Token: ' + data.accessToken, 'success') : showMessage(data.message || 'Login failed', 'error');
+            if (res.ok) {
+                showMessage('Login successful! Redirecting...', 'success');
+                // Wait 1 second before redirecting
+                setTimeout(() => {
+                    window.location.href = '/api/blogs/create-ui';
+                }, 1000);
+            } else {
+                showMessage(data.message || 'Login failed', 'error');
+            }
         } catch (err) { showMessage('Network error: ' + err.message, 'error'); }
     }
 </script>
@@ -383,8 +397,9 @@ router.post('/login' , async (req, res)=>{
             return res.status(401).json({ message: 'Invalid password' });
         }
         const tokens = jwToken.jwtToken(user.rows[0].id, user.rows[0].username);
-        res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: true, sameSite: 'Strict' });
-        return res.status(200).json({ accessToken: tokens.Accesstoken });
+        res.cookie('accessToken', tokens.Accesstoken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 15 * 60 * 1000 }); // 15 mins
+        res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        return res.status(200).json({ message: 'Logged in successfully' });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Error during login' });
