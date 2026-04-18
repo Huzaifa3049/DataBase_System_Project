@@ -11,7 +11,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
         }
         .container {
@@ -22,11 +22,23 @@
             width: 100%;
             max-width: 500px;
         }
-        h2 {
-            margin-top: 0;
-            color: #333;
-            text-align: center;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
         }
+        h2 {
+            margin: 0;
+            color: #333;
+        }
+        .save-status {
+            font-size: 0.8rem;
+            color: #999;
+        }
+        .save-status.saving { color: #e6a817; }
+        .save-status.saved { color: #28a745; }
+        .save-status.error { color: #dc3545; }
         .form-group {
             margin-bottom: 1rem;
         }
@@ -35,8 +47,7 @@
             margin-bottom: 0.5rem;
             color: #666;
         }
-        input[type="text"], 
-        input[type="number"],
+        input[type="text"],
         textarea {
             width: 100%;
             padding: 0.75rem;
@@ -48,10 +59,13 @@
             height: 150px;
             resize: vertical;
         }
+        .button-row {
+            display: flex;
+            gap: 0.75rem;
+        }
         button {
-            width: 100%;
+            flex: 1;
             padding: 0.75rem;
-            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
@@ -59,8 +73,21 @@
             font-size: 1rem;
             transition: background-color 0.2s;
         }
-        button:hover {
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-publish {
+            background-color: #007bff;
+        }
+        .btn-publish:hover:not(:disabled) {
             background-color: #0056b3;
+        }
+        .btn-save {
+            background-color: #6c757d;
+        }
+        .btn-save:hover:not(:disabled) {
+            background-color: #545b62;
         }
         #message {
             margin-top: 1rem;
@@ -78,11 +105,147 @@
             color: #721c24;
             display: block !important;
         }
+        .version-info {
+            font-size: 0.8rem;
+            color: #999;
+            text-align: right;
+            margin-top: 0.5rem;
+        }
+        /* Draft resume banner */
+        .draft-banner {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        .draft-banner p {
+            margin: 0 0 0.75rem 0;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+        .draft-banner button {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+        }
+        .btn-resume {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .btn-resume:hover {
+            background-color: #e0a800;
+        }
+        .btn-dismiss {
+            background-color: #eee;
+            color: #666;
+        }
+        .btn-dismiss:hover {
+            background-color: #ddd;
+        }
+
+        /* Version History Sidebar */
+        .version-btn {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.2s;
+            margin-left: 1rem;
+        }
+        .version-btn:hover {
+            background: #cbd5e0;
+        }
+        .version-sidebar {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1001;
+            transition: right 0.3s ease;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        .version-sidebar.open {
+            right: 0;
+        }
+        .version-sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f4f7f6;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        .version-sidebar-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #2d3748;
+        }
+        .close-sidebar-btn {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            line-height: 1;
+            cursor: pointer;
+            color: #a0aec0;
+            padding: 0;
+        }
+        .close-sidebar-btn:hover {
+            color: #4a5568;
+        }
+        .version-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .version-item {
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .version-item:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+        .version-item .v-number {
+            font-weight: 600;
+            color: #4a90e2;
+            margin-bottom: 0.25rem;
+        }
+        .version-item .v-date {
+            font-size: 0.8rem;
+            color: #718096;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Create New Blog</h2>
+        <div class="header" style="display: flex; align-items: center;">
+            <h2 style="margin: 0;">Create New Blog</h2>
+            <button class="version-btn" id="btnToggleVersions" style="display: none;">View History</button>
+            <span class="save-status" id="saveStatus" style="margin-left: auto;"></span>
+        </div>
+
+        <div class="draft-banner" id="draftBanner">
+            <p id="draftBannerText"></p>
+            <button class="btn-resume" id="btnResume">Resume Draft</button>
+            <button class="btn-dismiss" id="btnDismiss">Start Fresh</button>
+        </div>
+
         <form id="blogForm">
             <div class="form-group">
                 <label for="title">Title</label>
@@ -92,46 +255,301 @@
                 <label for="content">Content</label>
                 <textarea id="content" placeholder="Write your blog content here..." required></textarea>
             </div>
-            <button type="submit">Publish Blog</button>
+            <div class="button-row">
+                <button type="button" class="btn-save" id="btnSaveDraft">Save Draft</button>
+                <button type="submit" class="btn-publish" id="btnPublish">Publish Blog</button>
+            </div>
         </form>
+        <div class="version-info" id="versionInfo"></div>
         <div id="message"></div>
+        <div style="text-align: center; margin-top: 1rem;">
+            <a href="/api/dashboard" style="color: #007bff; text-decoration: none;">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Version History Sidebar -->
+    <div class="version-sidebar" id="versionSidebar">
+        <div class="version-sidebar-header">
+            <h3>Version History</h3>
+            <button class="close-sidebar-btn" id="btnCloseSidebar">&times;</button>
+        </div>
+        <div class="version-list" id="versionList">
+            <p style="color: #666; font-size: 0.9rem;">Select a draft first to see versions.</p>
+        </div>
     </div>
 
     <script>
-        document.getElementById('blogForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const messageDiv = document.getElementById('message');
-            const data = {
-                title: document.getElementById('title').value,
-                content: document.getElementById('content').value
-            };
+        let currentBlogId = null;
+        let currentVersionId = null;
+        let currentVersionNumber = 0;
+        let saveTimer = null;
+        let isSaving = false;
+        let pendingDraft = null; // stores draft data from /my-drafts for resume
+
+        const titleInput = document.getElementById('title');
+        const contentInput = document.getElementById('content');
+        const saveStatus = document.getElementById('saveStatus');
+        const versionInfo = document.getElementById('versionInfo');
+        const messageDiv = document.getElementById('message');
+        const versionSidebar = document.getElementById('versionSidebar');
+        const btnToggleVersions = document.getElementById('btnToggleVersions');
+        const btnCloseSidebar = document.getElementById('btnCloseSidebar');
+        const versionListDiv = document.getElementById('versionList');
+
+        // --- Version Sidebar Logic ---
+        btnToggleVersions.addEventListener('click', () => {
+            versionSidebar.classList.add('open');
+            fetchVersions();
+        });
+
+        btnCloseSidebar.addEventListener('click', () => {
+            versionSidebar.classList.remove('open');
+        });
+
+        async function fetchVersions() {
+            if (!currentBlogId) return;
+            versionListDiv.innerHTML = '<p style="color: #666; font-size: 0.9rem;">Loading backend data...</p>';
 
             try {
-                const response = await fetch('http://localhost:3000/api/blogs/create', {
+                const res = await fetch(`/api/blogs/${currentBlogId}/versions`);
+                const data = await res.json();
+                if (res.ok) {
+                    renderVersionList(data.versions);
+                } else {
+                    versionListDiv.innerHTML = '<p style="color: #dc3545; font-size: 0.9rem;">Failed to load versions.</p>';
+                }
+            } catch (err) {
+                console.error(err);
+                versionListDiv.innerHTML = '<p style="color: #dc3545; font-size: 0.9rem;">Error connecting to server.</p>';
+            }
+        }
+
+        function renderVersionList(versions) {
+            if (!versions || versions.length === 0) {
+                versionListDiv.innerHTML = '<p style="color: #666; font-size: 0.9rem;">No previous versions found.</p>';
+                return;
+            }
+            versionListDiv.innerHTML = versions.map(v => `
+                <div class="version-item" onclick="loadSpecificVersion(${v.version_number})">
+                    <div class="v-number">Version ${v.version_number}</div>
+                    <div class="v-date">${new Date(v.created_at).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadSpecificVersion(vNum) {
+            try {
+                const res = await fetch(`/api/blogs/${currentBlogId}/versions/${vNum}`);
+                const data = await res.json();
+                if (res.ok) {
+                    titleInput.value = data.title || '';
+                    contentInput.value = data.content || '';
+                    
+                    // Close the sidebar automatically
+                    versionSidebar.classList.remove('open');
+                    
+                    // Manually schedule save so this restores automatically
+                    scheduleAutoSave();
+                    showMessage('Version ' + vNum + ' restored!', 'success');
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to load version content.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection error loading version content.');
+            }
+        }
+
+        // --- Auto-save: debounce on every keystroke ---
+        function scheduleAutoSave() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveDraft, 2000);
+            saveStatus.textContent = 'Unsaved changes...';
+            saveStatus.className = 'save-status';
+        }
+
+        titleInput.addEventListener('input', scheduleAutoSave);
+        contentInput.addEventListener('input', scheduleAutoSave);
+
+        // --- Save draft ---
+        // createVersion = false → auto-save (UPDATE latest version in-place, fast)
+        // createVersion = true  → manual save (INSERT new version checkpoint, with AI embedding)
+        async function saveDraft(createVersion = false) {
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+
+            if (!title && !content) return;
+            if (isSaving) return;
+
+            isSaving = true;
+            saveStatus.textContent = createVersion ? 'Creating checkpoint...' : 'Auto-saving...';
+            saveStatus.className = 'save-status saving';
+
+            try {
+                const response = await fetch('/api/blogs/save-draft', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        blog_id: currentBlogId,
+                        title,
+                        content,
+                        create_version: createVersion
+                    })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    messageDiv.textContent = '✅ Blog created successfully! ID: ' + result.blog_id;
-                    messageDiv.className = 'success';
-                    document.getElementById('blogForm').reset();
+                    currentBlogId = result.blog_id;
+                    currentVersionNumber = result.version_number;
+
+                    if (result.is_new_version) {
+                        saveStatus.textContent = 'Version ' + result.version_number + ' saved ✓';
+                        showMessage('Version ' + result.version_number + ' checkpoint created!', 'success');
+                    } else {
+                        saveStatus.textContent = 'Draft saved';
+                    }
+                    saveStatus.className = 'save-status saved';
+                    versionInfo.textContent = 'Version ' + currentVersionNumber;
+                    btnToggleVersions.style.display = 'block';
+
+                    setTimeout(() => {
+                        if (saveStatus.className.includes('saved')) {
+                            saveStatus.textContent = '';
+                        }
+                    }, 5000);
                 } else {
-                    messageDiv.textContent = '❌ Error: ' + (result.error || 'Failed to create blog');
-                    messageDiv.className = 'error';
+                    saveStatus.textContent = 'Save failed';
+                    saveStatus.className = 'save-status error';
                 }
             } catch (err) {
-                messageDiv.textContent = '❌ Connection failed. Is the server running?';
-                messageDiv.className = 'error';
+                saveStatus.textContent = 'Save failed - offline?';
+                saveStatus.className = 'save-status error';
+                console.error(err);
+            } finally {
+                isSaving = false;
+            }
+        }
+
+        // --- Manual save button → creates a NEW version checkpoint ---
+        document.getElementById('btnSaveDraft').addEventListener('click', () => {
+            clearTimeout(saveTimer);
+            saveDraft(true);  // true = create_version = INSERT new version
+        });
+
+        // --- Publish ---
+        document.getElementById('blogForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearTimeout(saveTimer);
+
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+
+            if (!title || !content) {
+                showMessage('Title and content are required to publish.', 'error');
+                return;
+            }
+
+            // Save the latest draft first if we don't have a blog yet
+            if (!currentBlogId) {
+                await saveDraft();
+            }
+
+            if (!currentBlogId) {
+                showMessage('Failed to save draft before publishing.', 'error');
+                return;
+            }
+
+            // Save one more time to capture any final changes
+            await saveDraft();
+
+            try {
+                const response = await fetch('/api/blogs/publish/' + currentBlogId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('Blog published successfully!', 'success');
+                    // Reset for a new blog
+                    currentBlogId = null;
+                    currentVersionId = null;
+                    currentVersionNumber = 0;
+                    versionInfo.textContent = '';
+                    saveStatus.textContent = '';
+                    document.getElementById('blogForm').reset();
+                } else {
+                    showMessage(result.message || result.error || 'Failed to publish', 'error');
+                }
+            } catch (err) {
+                showMessage('Connection failed. Is the server running?', 'error');
                 console.error(err);
             }
         });
+
+        // --- Draft resume on page load ---
+        async function checkForDrafts() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const draftIdParam = urlParams.get('draft_id');
+
+                const response = await fetch('/api/blogs/my-drafts');
+                const result = await response.json();
+
+                if (response.ok && result.drafts && result.drafts.length > 0) {
+                    if (draftIdParam) {
+                        const targetDraft = result.drafts.find(d => d.blog_id === draftIdParam);
+                        if (targetDraft) {
+                            currentBlogId = targetDraft.blog_id;
+                            titleInput.value = targetDraft.title || '';
+                            contentInput.value = targetDraft.content || '';
+                            saveStatus.textContent = 'Draft loaded';
+                            saveStatus.className = 'save-status saved';
+                            btnToggleVersions.style.display = 'block';
+                            return;
+                        }
+                    }
+
+                    pendingDraft = result.drafts[0]; // most recent draft
+                    const banner = document.getElementById('draftBanner');
+                    const bannerText = document.getElementById('draftBannerText');
+                    bannerText.textContent = 'You have an unsaved draft: "' + (pendingDraft.title || 'Untitled') + '". Resume editing?';
+                    banner.style.display = 'block';
+                }
+            } catch (err) {
+                console.error('Could not check for drafts:', err);
+            }
+        }
+
+        document.getElementById('btnResume').addEventListener('click', () => {
+            if (pendingDraft) {
+                currentBlogId = pendingDraft.blog_id;
+                titleInput.value = pendingDraft.title || '';
+                contentInput.value = pendingDraft.content || '';
+                document.getElementById('draftBanner').style.display = 'none';
+                saveStatus.textContent = 'Draft loaded';
+                saveStatus.className = 'save-status saved';
+                btnToggleVersions.style.display = 'block';
+            }
+        });
+
+        document.getElementById('btnDismiss').addEventListener('click', () => {
+            pendingDraft = null;
+            document.getElementById('draftBanner').style.display = 'none';
+        });
+
+        function showMessage(text, type) {
+            messageDiv.textContent = (type === 'success' ? '' : '') + ' ' + text;
+            messageDiv.className = type;
+            if (type === 'success') {
+                setTimeout(() => { messageDiv.style.display = 'none'; }, 3000);
+            }
+        }
+
+        // Check for drafts on page load
+        checkForDrafts();
     </script>
 </body>
 </html>

@@ -4,6 +4,9 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import jwToken from '../utils/jwt-helpers.js';
 import { send_and_generate_OTP, verifyOTP, storeSignupData, getSignupData } from '../utils/send_email.js';
+import authenticateToken from '../middleware/authorization.js';
+import redis from '../redis.js';
+import { checkRateLimit } from '../utils/rateLimiter.js';
 
 
 
@@ -67,7 +70,7 @@ const HTML_LOGIN = `<!DOCTYPE html>
                 showMessage('Login successful! Redirecting...', 'success');
                 // Wait 1 second before redirecting
                 setTimeout(() => {
-                    window.location.href = '/api/blogs/create-ui';
+                    window.location.href = '/api/dashboard';
                 }, 1000);
             } else {
                 showMessage(data.message || 'Login failed', 'error');
@@ -383,6 +386,11 @@ router.get('/signup', (req, res) => res.send(HTML_SIGNUP));
 router.get('/forgot-password', (req, res) => res.send(HTML_FORGOT_PASSWORD));
 
 router.post('/login' , async (req, res)=>{
+    const ip = req.ip || req.connection.remoteAddress;
+    if (await checkRateLimit(`login:${ip}`, 5, 60)) {
+        return res.status(429).json({ message: 'Too many login attempts. Try again in 1 minute.' });
+    }
+
     let { username , password} = req.body;
     username = username.trim();
     username = username.toLowerCase();
@@ -414,6 +422,11 @@ function verify_email(email) {
 
 // Step 1: Send OTP and store signup data
 router.post('/signup-request', async (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    if (await checkRateLimit(`signup:${ip}`, 3, 60)) {
+        return res.status(429).json({ message: 'Too many signup attempts. Try again in 1 minute.' });
+    }
+
     let { username, email, password, confirm_password } = req.body;
     
     // Validate and normalize inputs
@@ -443,8 +456,8 @@ router.post('/signup-request', async (req, res) => {
         
         // Hash password and store signup data temporarily
         const hashedPassword = await bcrypt.hash(password, 10);
-        storeSignupData(email, { username, email, hashedPassword });
-        
+        await storeSignupData(email, { username, email, hashedPassword });
+
         // Send OTP
         const otpResult = await send_and_generate_OTP(email);
         
@@ -464,14 +477,14 @@ router.post('/verify-otp', async (req, res) => {
     const { email, otp } = req.body;
     
     // Verify OTP
-    const otpVerification = verifyOTP(email, otp);
-    
+    const otpVerification = await verifyOTP(email, otp);
+
     if (!otpVerification.success) {
         return res.status(400).json({ message: otpVerification.message });
     }
-    
+
     // Get stored signup data
-    const signupData = getSignupData(email);
+    const signupData = await getSignupData(email);
     
     if (!signupData) {
         return res.status(400).json({ message: 'Signup session expired. Please sign up again.' });
@@ -495,16 +508,21 @@ router.post('/verify-otp', async (req, res) => {
 });
 
 router.post('/login/forgot-password', async (req, res) => {
-    const { email, username } = req.body; 
-    const query_to_check_user = 'SELECT * FROM users WHERE email = $1 AND username = $2'; 
+    const ip = req.ip || req.connection.remoteAddress;
+    if (await checkRateLimit(`forgot:${ip}`, 3, 60)) {
+        return res.status(429).json({ message: 'Too many attempts. Try again in 1 minute.' });
+    }
+
+    const { email, username } = req.body;
+    const query_to_check_user = 'SELECT * FROM users WHERE email = $1 AND username = $2';
     try {
         const user = await pool.query(query_to_check_user, [email, username]);
         if(user.rows.length === 0){
             return res.status(404).json({ message: 'User not found' });
         }
-        const otpResult = await send_and_generate_OTP(email); 
+        const otpResult = await send_and_generate_OTP(email);
         if (otpResult.success) {
-            storeSignupData(email, { username, email, isPasswordReset: true });
+            await storeSignupData(email, { username, email, isPasswordReset: true });
             return res.status(200).json({ message: 'OTP sent successfully' });
         } else {
             return res.status(500).json({ message: 'Failed to send OTP' });
@@ -518,16 +536,14 @@ router.post('/login/forgot-password', async (req, res) => {
 // Step 2: Verify OTP for password reset
 router.post('/verify-reset-otp', async (req, res) => {
     const { email, otp } = req.body;
-    
-    // Verify OTP
-    const otpVerification = verifyOTP(email, otp);
-    
+
+    const otpVerification = await verifyOTP(email, otp);
+
     if (!otpVerification.success) {
         return res.status(400).json({ message: otpVerification.message });
     }
-    
-    // Get stored password reset data
-    const resetData = getSignupData(email);
+
+    const resetData = await getSignupData(email);
     
     if (!resetData) {
         return res.status(400).json({ message: 'Password reset session expired. Please try again.' });
@@ -575,5 +591,116 @@ router.post('/reset-password', async (req, res) => {
 
 
 
+
+// Get profile
+router.get('/profile', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT id, username, email, created_at FROM users WHERE id = $1',
+            [req.user.id]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ user: result.rows[0] });
+    } catch (error) {
+        console.error('Error fetching profile:', error);
+        res.status(500).json({ message: 'Error fetching profile' });
+    }
+});
+
+// Update profile (username and/or email)
+router.put('/profile', authenticateToken, async (req, res) => {
+    let { username, email } = req.body;
+    const userId = req.user.id;
+
+    if (!username && !email) {
+        return res.status(400).json({ message: 'Provide username or email to update' });
+    }
+
+    username = username?.trim().toLowerCase();
+    email = email?.trim().toLowerCase();
+
+    if (email && !verify_email(email)) {
+        return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    try {
+        // Check for conflicts with other users
+        const conflict = await pool.query(
+            'SELECT id FROM users WHERE (username = $1 OR email = $2) AND id != $3',
+            [username, email, userId]
+        );
+        if (conflict.rows.length > 0) {
+            return res.status(400).json({ message: 'Username or email already taken by another user' });
+        }
+
+        const current = await pool.query('SELECT username, email FROM users WHERE id = $1', [userId]);
+        const updatedUsername = username || current.rows[0].username;
+        const updatedEmail = email || current.rows[0].email;
+
+        await pool.query(
+            'UPDATE users SET username = $1, email = $2 WHERE id = $3',
+            [updatedUsername, updatedEmail, userId]
+        );
+
+        res.status(200).json({ message: 'Profile updated successfully', user: { username: updatedUsername, email: updatedEmail } });
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        res.status(500).json({ message: 'Error updating profile' });
+    }
+});
+
+// Change password (requires current password)
+router.post('/change-password', authenticateToken, async (req, res) => {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: 'New passwords do not match' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    try {
+        const userResult = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
+        const validPassword = await bcrypt.compare(currentPassword, userResult.rows[0].password);
+
+        if (!validPassword) {
+            return res.status(401).json({ message: 'Current password is incorrect' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, userId]);
+
+        res.status(200).json({ message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Error changing password:', error);
+        res.status(500).json({ message: 'Error changing password' });
+    }
+});
+
+// Logout — blacklist tokens then clear cookies
+router.get('/logout', async (req, res) => {
+    const accessToken = req.cookies.accessToken;
+    const refreshToken = req.cookies.refreshToken;
+
+    if (accessToken) {
+        await redis.set(`blacklist:${accessToken}`, '1', 'EX', 15 * 60);
+    }
+    if (refreshToken) {
+        await redis.set(`blacklist:${refreshToken}`, '1', 'EX', 7 * 24 * 60 * 60);
+    }
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    res.redirect('/api/auth/login');
+});
 
 export default router ;

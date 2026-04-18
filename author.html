@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Author Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f0f1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            position: sticky; top: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 2rem;
+            background: rgba(15,15,26,0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .top-bar a {
+            color: #a78bfa; text-decoration: none; font-weight: 600;
+            transition: color .2s;
+        }
+        .top-bar a:hover { color: #c4b5fd; }
+
+        .author-header {
+            max-width: 760px; margin: 0 auto;
+            padding: 3rem 2rem 1.5rem;
+            text-align: center;
+        }
+        .author-avatar {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 2rem; color: #fff;
+            margin: 0 auto 1rem;
+        }
+        .author-name { font-size: 1.8rem; font-weight: 700; color: #f8fafc; }
+        .author-since { font-size: .85rem; color: #94a3b8; margin-top: .3rem; }
+        .author-stats {
+            display: flex; justify-content: center; gap: 2rem;
+            margin-top: 1rem; font-size: .9rem; color: #64748b;
+        }
+        .author-stats span strong { color: #e2e8f0; }
+
+        .blog-list {
+            max-width: 760px; margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+        .blog-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all .25s;
+        }
+        .blog-card:hover {
+            background: rgba(255,255,255,0.07);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        .blog-card h3 {
+            font-size: 1.25rem; font-weight: 600; color: #f1f5f9;
+            margin-bottom: .5rem;
+        }
+        .blog-card p {
+            font-size: .9rem; color: #94a3b8; line-height: 1.6;
+        }
+        .blog-card .card-meta {
+            display: flex; gap: 1.5rem; margin-top: .75rem;
+            font-size: .8rem; color: #64748b;
+        }
+
+        .empty-state {
+            text-align: center; padding: 4rem 2rem;
+            color: #64748b; font-size: 1rem;
+        }
+
+        .loading-state { text-align: center; padding: 4rem 2rem; }
+        .spinner {
+            width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #a78bfa; border-radius: 50%;
+            animation: spin .7s linear infinite; margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .pagination {
+            display: flex; justify-content: center; gap: .5rem;
+            padding: 1rem 0 3rem;
+        }
+        .page-btn {
+            padding: .5rem 1rem; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: #e2e8f0; cursor: pointer;
+            transition: all .2s;
+        }
+        .page-btn:hover { background: rgba(255,255,255,0.08); }
+        .page-btn.active { background: #667eea; border-color: #667eea; }
+        .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        .fade-in { animation: fadeIn .5s ease-out; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <a href="/api/blogs/feed-ui">← Back to Feed</a>
+    <a href="/api/profile">My Profile</a>
+</div>
+
+<div class="loading-state" id="loadingState">
+    <div class="spinner"></div>
+    <p style="color:#94a3b8;">Loading author profile…</p>
+</div>
+
+<div id="authorPage" style="display:none;" class="fade-in">
+    <div class="author-header">
+        <div class="author-avatar" id="authorAvatar"></div>
+        <div class="author-name" id="authorName"></div>
+        <div class="author-since" id="authorSince"></div>
+        <div class="author-stats" id="authorStats"></div>
+    </div>
+
+    <div class="blog-list" id="blogList"></div>
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const authorId = params.get('id');
+    let currentPage = 1;
+
+    async function loadAuthorPage(page = 1) {
+        if (!authorId) {
+            document.getElementById('loadingState').innerHTML = '<div class="empty-state">No author specified</div>';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/blogs/author/${authorId}?page=${page}&limit=10`);
+            if (!res.ok) {
+                document.getElementById('loadingState').innerHTML = '<div class="empty-state">Author not found</div>';
+                return;
+            }
+
+            const data = await res.json();
+            currentPage = page;
+
+            // Author header
+            const author = data.author;
+            document.getElementById('authorAvatar').textContent = author.username.charAt(0).toUpperCase();
+            document.getElementById('authorName').textContent = author.username;
+            document.getElementById('authorSince').textContent = 'Member since ' + new Date(author.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+            document.getElementById('authorStats').innerHTML = `
+                <span><strong>${data.pagination.total}</strong> published blogs</span>
+            `;
+
+            // Blog list
+            const list = document.getElementById('blogList');
+            if (data.blogs.length === 0) {
+                list.innerHTML = '<div class="empty-state">No published blogs yet</div>';
+            } else {
+                list.innerHTML = data.blogs.map(b => `
+                    <div class="blog-card" onclick="window.location.href='/api/blogs/read-ui?id=${b.blog_id}'">
+                        <h3>${escapeHtml(b.title)}</h3>
+                        <p>${escapeHtml((b.content || '').substring(0, 200))}${(b.content || '').length > 200 ? '...' : ''}</p>
+                        <div class="card-meta">
+                            <span>❤️ ${b.likes_count}</span>
+                            <span>💬 ${b.comments_count}</span>
+                            <span>${new Date(b.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Pagination
+            renderPagination(data.pagination);
+
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('authorPage').style.display = 'block';
+
+        } catch (err) {
+            console.error('Error loading author:', err);
+            document.getElementById('loadingState').innerHTML = '<div class="empty-state">Failed to load author profile</div>';
+        }
+    }
+
+    function renderPagination(p) {
+        const el = document.getElementById('pagination');
+        if (p.total_pages <= 1) { el.innerHTML = ''; return; }
+
+        let html = `<button class="page-btn" ${p.page <= 1 ? 'disabled' : ''} onclick="loadAuthorPage(${p.page - 1})">← Prev</button>`;
+        for (let i = 1; i <= p.total_pages; i++) {
+            html += `<button class="page-btn ${i === p.page ? 'active' : ''}" onclick="loadAuthorPage(${i})">${i}</button>`;
+        }
+        html += `<button class="page-btn" ${p.page >= p.total_pages ? 'disabled' : ''} onclick="loadAuthorPage(${p.page + 1})">Next →</button>`;
+        el.innerHTML = html;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    loadAuthorPage();
+</script>
+
+</body>
+</html>

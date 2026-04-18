@@ -106,4 +106,100 @@ CREATE TABLE IF NOT EXISTS published_versions (
     published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-SELECT 'Setup complete! Tables created successfully.' AS status;
+CREATE TABLE IF NOT EXISTS blog_likes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    blog_id UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_user_blog_like UNIQUE (user_id, blog_id)
+);
+
+CREATE TABLE IF NOT EXISTS blog_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    blog_id UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_blog_comments_blog_id ON blog_comments(blog_id);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recipient_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    actor_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    blog_id UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('like', 'comment')),
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id, is_read, created_at DESC);
+
+-- =============================================
+-- TRIGGERS & FUNCTIONS
+-- =============================================
+
+-- 1. Auto-update `updated_at` on blogs whenever the row changes
+CREATE OR REPLACE FUNCTION update_blog_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_blog_updated_at ON blogs;
+CREATE TRIGGER trg_blog_updated_at
+    BEFORE UPDATE ON blogs
+    FOR EACH ROW
+    EXECUTE FUNCTION update_blog_updated_at();
+
+-- 2. Auto-sync likes_count when blog_likes rows are inserted or deleted
+CREATE OR REPLACE FUNCTION sync_likes_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE blogs SET likes_count = likes_count + 1 WHERE id = NEW.blog_id;
+        RETURN NEW;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE blogs SET likes_count = likes_count - 1 WHERE id = OLD.blog_id;
+        RETURN OLD;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_sync_likes_count ON blog_likes;
+CREATE TRIGGER trg_sync_likes_count
+    AFTER INSERT OR DELETE ON blog_likes
+    FOR EACH ROW
+    EXECUTE FUNCTION sync_likes_count();
+
+-- 3. Auto-sync comments_count when blog_comments rows are inserted or deleted
+CREATE OR REPLACE FUNCTION sync_comments_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE blogs SET comments_count = comments_count + 1 WHERE id = NEW.blog_id;
+        RETURN NEW;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE blogs SET comments_count = comments_count - 1 WHERE id = OLD.blog_id;
+        RETURN OLD;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_sync_comments_count ON blog_comments;
+CREATE TRIGGER trg_sync_comments_count
+    AFTER INSERT OR DELETE ON blog_comments
+    FOR EACH ROW
+    EXECUTE FUNCTION sync_comments_count();
+
+-- =============================================
+-- ADDITIONAL INDEXES
+-- =============================================
+CREATE INDEX IF NOT EXISTS idx_blogs_author ON blogs(author_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_published ON blogs(is_published, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_blog_likes_blog ON blog_likes(blog_id);
+
+SELECT 'Setup complete! Tables, triggers, and indexes created successfully.' AS status;

@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import redis from '../redis.js';
 
 dotenv.config();
 
@@ -11,29 +12,23 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// In-memory OTP storage (for production, use database or Redis)
-const otpStorage = new Map();
-
-// In-memory temp signup storage
-const tempSignupStorage = new Map();
-
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000);
 }
 
 async function send_and_generate_OTP(email) {
     const otp = generateOTP();
-    
-    // Store OTP
-    otpStorage.set(email, otp);
-    
+
+    // Store OTP in Redis with 5-minute TTL (auto-expires, no cleanup needed)
+    await redis.set(`otp:${email}`, otp, 'EX', 300);
+
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: 'OTP FOR SIGNUP', 
+        subject: 'OTP FOR SIGNUP',
         text: `Your OTP for signup is: ${otp}`
     };
-    
+
     try {
         await transporter.sendMail(mailOptions);
         console.log('OTP email sent successfully');
@@ -44,35 +39,33 @@ async function send_and_generate_OTP(email) {
     }
 }
 
-function verifyOTP(email, otp) {
-    const storedOTP = otpStorage.get(email);
-    
+async function verifyOTP(email, otp) {
+    const storedOTP = await redis.get(`otp:${email}`);
+
     if (!storedOTP) {
-        return { success: false, message: 'OTP not found' };
+        return { success: false, message: 'OTP not found or expired' };
     }
-    
-    if (storedOTP === parseInt(otp)) {
-        otpStorage.delete(email);
+
+    if (parseInt(storedOTP) === parseInt(otp)) {
+        await redis.del(`otp:${email}`);
         return { success: true, message: 'OTP verified successfully' };
     }
-    
+
     return { success: false, message: 'Invalid OTP' };
 }
 
-// Store temp signup data
-function storeSignupData(email, data) {
-    tempSignupStorage.set(email, { ...data, storedAt: Date.now() });
+async function storeSignupData(email, data) {
+    await redis.set(`signup:${email}`, JSON.stringify({ ...data, storedAt: Date.now() }), 'EX', 600);
     return { success: true };
 }
 
-// Retrieve and delete temp signup data
-function getSignupData(email) {
-    const data = tempSignupStorage.get(email);
-    if (data) {
-        tempSignupStorage.delete(email);
+async function getSignupData(email) {
+    const raw = await redis.get(`signup:${email}`);
+    if (raw) {
+        await redis.del(`signup:${email}`);
+        return JSON.parse(raw);
     }
-    return data;
+    return null;
 }
 
 export { send_and_generate_OTP, verifyOTP, storeSignupData, getSignupData };
-

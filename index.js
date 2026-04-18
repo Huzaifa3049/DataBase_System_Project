@@ -21,9 +21,34 @@ app.use(cookieParser());
 app.use('/api/auth', router);
 app.use('/api/blogs', blog_router);
 
+// Serve the dashboard UI
+app.get('/api/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
 // Serve the blog writing UI
 app.get('/api/blogs/create-ui', (req, res) => {
     res.sendFile(path.join(__dirname, 'create-blog.html'));
+});
+
+// Serve the feed UI
+app.get('/api/blogs/feed-ui', (req, res) => {
+    res.sendFile(path.join(__dirname, 'feed.html'));
+});
+
+// Serve the blog reader UI
+app.get('/api/blogs/read-ui', (req, res) => {
+    res.sendFile(path.join(__dirname, 'read-blog.html'));
+});
+
+// Serve the profile UI
+app.get('/api/profile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'profile.html'));
+});
+
+// Serve the author page UI
+app.get('/api/blogs/author-ui', (req, res) => {
+    res.sendFile(path.join(__dirname, 'author.html'));
 });
 
 app.get('/', (req, res) => {

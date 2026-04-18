@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Feed</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        h1 { color: #2d3748; text-align: center; }
+        
+        .search-container { margin-bottom: 2rem; display: flex; gap: 1rem; }
+        input[type="text"] {
+            flex: 1; padding: 1rem; border-radius: 8px;
+            border: 1px solid #ccc; font-size: 1rem; outline: none;
+        }
+        button {
+            padding: 1rem 1.5rem; border-radius: 8px; border: none;
+            background: #4a90e2; color: white; font-weight: 600;
+            cursor: pointer; transition: 0.3s;
+        }
+        button:hover { background: #357abd; }
+
+        .blog-card {
+            background: #fff; border-radius: 12px; padding: 1.5rem;
+            margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: 0.3s;
+        }
+        .blog-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .blog-title { margin: 0 0 1rem 0; color: #2d3748; font-size: 1.5rem; }
+        .blog-content { color: #4a5568; line-height: 1.6; }
+        .like-btn {
+            margin-top: 1rem; background: #e53e3e; padding: 0.5rem 1rem;
+        }
+        .like-btn:hover { background: #c53030; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="/api/dashboard" style="text-decoration:none; color: #4a90e2; font-weight: bold;">← Back to Dashboard</a>
+    <h1>✨ Your Personalized AI Feed</h1>
+
+    <!-- AI Search Bar -->
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Try semantic search: 'How to code in javascript'">
+        <button onclick="searchBlogs()">AI Search</button>
+    </div>
+
+    <!-- Blog Container -->
+    <div id="feedContainer">
+        <!-- Blogs will be injected here via JavaScript -->
+        <p style="text-align:center;">Loading your recommendations...</p>
+    </div>
+</div>
+
+<script>
+    // In your platform, you might be using cookies instead of localStorage for the token. 
+    // If auth fails, try removing the Authorization header in the fetch calls below!
+    const token = localStorage.getItem('token'); 
+
+    async function loadFeed() {
+        document.getElementById('feedContainer').innerHTML = "<p>Loading recommendations...</p>";
+        try {
+            const response = await fetch('/api/blogs/feed', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            displayBlogs(data.feed || []);
+        } catch (error) {
+            console.error("Error loading feed", error);
+        }
+    }
+
+    async function searchBlogs() {
+        const query = document.getElementById('searchInput').value;
+        if (!query) return loadFeed(); // Reload feed if search is empty
+
+        document.getElementById('feedContainer').innerHTML = "<p>Analyzing exact semantic meaning...</p>";
+        try {
+            const response = await fetch(`/api/blogs/search?q=${encodeURIComponent(query)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            displayBlogs(data.results || []);
+        } catch (error) {
+            console.error("Error searching", error);
+        }
+    }
+
+    async function likeBlog(blogId) {
+        try {
+            const response = await fetch(`/api/blogs/like/${blogId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if(response.ok) {
+                alert("Liked! Your taste profile has been mathematically tuned!");
+                loadFeed(); // Reload the feed to show new recommendations!
+            }
+        } catch (error) {
+            console.error("Error liking blog", error);
+        }
+    }
+
+    function displayBlogs(blogs) {
+        const container = document.getElementById('feedContainer');
+        container.innerHTML = ""; // Clear loader
+        
+        if (blogs.length === 0) {
+            container.innerHTML = "<p style='text-align:center'>No blogs found.</p>";
+            return;
+        }
+
+        blogs.forEach(blog => {
+            const card = document.createElement('div');
+            card.className = "blog-card";
+            card.innerHTML = `
+                <h3 class="blog-title" style="cursor:pointer;" onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'">${blog.title}</h3>
+                <div class="blog-content" style="cursor:pointer;" onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'">${blog.content.substring(0, 300)}...</div>
+                <button class="like-btn" onclick="likeBlog('${blog.blog_id}')">❤️ Like to tune profile</button>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // Load the feed automatically on page load
+    loadFeed();
+</script>
+
+</body>
+</html>
