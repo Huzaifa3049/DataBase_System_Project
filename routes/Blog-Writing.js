@@ -3,71 +3,97 @@ import pool from '../db.js';
 import authenticateToken from '../middleware/authorization.js';
 import RecommenderService from '../utils/recommender.js';
 import cacheHelper from '../utils/cache.js';
+import { embeddingQueue } from '../queues/index.js';
 
 const blog_router = express.Router();
 
-blog_router.post('/create', authenticateToken, async (req, res) => {
+blog_router.post('/create', authenticateToken, async (req, res, next) => {
     const { title, content } = req.body;
-    const author_id = req.user.id; 
-    
-    try {
-        const blogQuery = 'INSERT INTO blogs (title, author_id) VALUES ($1, $2) RETURNING id';
-        const blogResult = await pool.query(blogQuery, [title, author_id]);
-        const blogId = blogResult.rows[0].id;
-        
-        const embeddingArray = await RecommenderService.generateEmbedding(title + content);
-        const vectorString = `[${embeddingArray.join(',')}]`;
+    const author_id = req.user.id;
 
-        const versionQuery = `
-            INSERT INTO blog_versions (blog_id, version_number, content, parent_version_id, content_embedding)
-            VALUES ($1, 1, $2, NULL , $3)
-            RETURNING id
-        `;
-        const versionResult = await pool.query(versionQuery, [blogId, content, vectorString]);
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const blogResult = await client.query(
+            'INSERT INTO blogs (title, author_id) VALUES ($1, $2) RETURNING id',
+            [title, author_id]
+        );
+        const blogId = blogResult.rows[0].id;
+
+        // content_embedding starts NULL — worker fills it in background
+        const versionResult = await client.query(
+            `INSERT INTO blog_versions (blog_id, version_number, content, parent_version_id)
+             VALUES ($1, 1, $2, NULL) RETURNING id`,
+            [blogId, content]
+        );
         const versionId = versionResult.rows[0].id;
-        
-        const updateQuery = 'UPDATE blogs SET current_version_id = $1 WHERE id = $2';
-        await pool.query(updateQuery, [versionId, blogId]);
-        
-        await pool.query(
+
+        await client.query(
+            'UPDATE blogs SET current_version_id = $1 WHERE id = $2',
+            [versionId, blogId]
+        );
+
+        await client.query(
             'INSERT INTO published_versions (blog_id, version_id) VALUES ($1, $2)',
             [blogId, versionId]
         );
 
-        res.status(201).json({ 
-            message: 'Blog created successfully', 
-            blog_id: blogId, 
-            version_id: versionId 
+        await client.query('COMMIT');
+
+        // Queue embedding — runs in background, user already has response
+        await embeddingQueue.add('generate', { blogId, versionId, title, content });
+
+        res.status(201).json({
+            message: 'Blog created successfully',
+            blog_id: blogId,
+            version_id: versionId
         });
     } catch (error) {
-        console.error('Error creating blog post:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        await client.query('ROLLBACK');
+        next(error);
+    } finally {
+        client.release();
     }
 });
 
-blog_router.post('/save-draft', authenticateToken, async (req, res) => {
+blog_router.post('/save-draft', authenticateToken, async (req, res, next) => {
     const { title, content, create_version } = req.body;
     let { blog_id } = req.body;
     const author_id = req.user.id;
 
+    // On manual saves, generate the embedding BEFORE opening the transaction
+    // (slow external call — must not block a DB connection while it runs)
+    let vectorString = null;
+    if (create_version) {
+        try {
+            const embeddingArray = await RecommenderService.generateEmbedding((title || '') + ' ' + (content || ''));
+            vectorString = `[${embeddingArray.join(',')}]`;
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    const client = await pool.connect();
     try {
-        // Step 1: Create blog row if it doesn't exist yet
+        await client.query('BEGIN');
+
+        // Step 1: Create or update the blog row
         if (!blog_id) {
-            const insertBlog = await pool.query(
+            const insertBlog = await client.query(
                 'INSERT INTO blogs (title, author_id, is_published) VALUES ($1, $2, FALSE) RETURNING id',
                 [title, author_id]
             );
             blog_id = insertBlog.rows[0].id;
         } else {
-            // Update the blog title
-            await pool.query(
+            await client.query(
                 'UPDATE blogs SET title = $1 WHERE id = $2 AND author_id = $3',
                 [title, blog_id, author_id]
             );
         }
 
         // Step 2: Get the latest existing version for this blog
-        const latestVersion = await pool.query(
+        const latestVersion = await client.query(
             'SELECT id, version_number FROM blog_versions WHERE blog_id = $1 ORDER BY version_number DESC LIMIT 1',
             [blog_id]
         );
@@ -78,16 +104,12 @@ blog_router.post('/save-draft', authenticateToken, async (req, res) => {
 
         if (create_version || latestVersion.rows.length === 0) {
             // ── MANUAL SAVE or FIRST-EVER SAVE ──
-            // Create a brand new version row (a real checkpoint)
             versionNumber = latestVersion.rows.length > 0
                 ? latestVersion.rows[0].version_number + 1
                 : 1;
 
-            // Generate embedding only on manual save (expensive operation)
-            const embeddingArray = await RecommenderService.generateEmbedding((title || "") + " " + (content || ""));
-            const vectorString = `[${embeddingArray.join(',')}]`;
-
-            const insertVersion = await pool.query(
+            // vectorString was already generated above, before the transaction
+            const insertVersion = await client.query(
                 'INSERT INTO blog_versions (blog_id, version_number, title, content, content_embedding) VALUES ($1, $2, $3, $4, $5) RETURNING id',
                 [blog_id, versionNumber, title, content, vectorString]
             );
@@ -96,18 +118,19 @@ blog_router.post('/save-draft', authenticateToken, async (req, res) => {
 
         } else {
             // ── AUTO-SAVE ──
-            // Just update the latest version's content in-place (no new row, no embedding)
             versionId = latestVersion.rows[0].id;
             versionNumber = latestVersion.rows[0].version_number;
 
-            await pool.query(
+            await client.query(
                 'UPDATE blog_versions SET title = $1, content = $2 WHERE id = $3',
                 [title, content, versionId]
             );
         }
 
         // Step 3: Point the blog to whichever version we just wrote to
-        await pool.query('UPDATE blogs SET current_version_id = $1 WHERE id = $2', [versionId, blog_id]);
+        await client.query('UPDATE blogs SET current_version_id = $1 WHERE id = $2', [versionId, blog_id]);
+
+        await client.query('COMMIT');
 
         res.status(200).json({
             blog_id,
@@ -115,12 +138,14 @@ blog_router.post('/save-draft', authenticateToken, async (req, res) => {
             is_new_version: isNewVersion
         });
     } catch (err) {
-        console.error('Error saving draft:', err);
-        res.status(500).json({ error: 'Server error' });
+        await client.query('ROLLBACK');
+        next(err);
+    } finally {
+        client.release();
     }
 });
 
-blog_router.get('/my-drafts', authenticateToken, async (req, res) => {
+blog_router.get('/my-drafts', authenticateToken, async (req, res, next) => {
     const author_id = req.user.id;
     try {
         const query = `
@@ -133,12 +158,11 @@ blog_router.get('/my-drafts', authenticateToken, async (req, res) => {
         const result = await pool.query(query, [author_id]);
         res.status(200).json({ drafts: result.rows });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        next(err);
     }
 });
 
-blog_router.get('/my-published', authenticateToken, async (req, res) => {
+blog_router.get('/my-published', authenticateToken, async (req, res, next) => {
     const author_id = req.user.id;
     try {
         const query = `
@@ -151,12 +175,11 @@ blog_router.get('/my-published', authenticateToken, async (req, res) => {
         const result = await pool.query(query, [author_id]);
         res.status(200).json({ blogs: result.rows });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        next(err);
     }
 });
 
-blog_router.get('/my-liked', authenticateToken, async (req, res) => {
+blog_router.get('/my-liked', authenticateToken, async (req, res, next) => {
     const user_id = req.user.id;
     try {
         const query = `
@@ -170,8 +193,7 @@ blog_router.get('/my-liked', authenticateToken, async (req, res) => {
         const result = await pool.query(query, [user_id]);
         res.status(200).json({ blogs: result.rows });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        next(err);
     }
 });
 
@@ -184,7 +206,7 @@ blog_router.get('/my-liked', authenticateToken, async (req, res) => {
 //   User A's personalized feed is different from User B's.
 //   But ALL users without a taste profile see the same chronological feed,
 //   so they can safely share one cached result.
-blog_router.get('/feed', authenticateToken, async (req, res) => {
+blog_router.get('/feed', authenticateToken, async (req, res, next) => {
     const userId = req.user.id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -262,20 +284,20 @@ blog_router.get('/feed', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error fetching feed:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 
 // Route to toggle Like / Unlike a blog
-blog_router.post('/like/:blog_id', authenticateToken, async (req, res) => {
+blog_router.post('/like/:blog_id', authenticateToken, async (req, res, next) => {
     const userId = req.user.id;
     const blogId = req.params.blog_id;
 
     try {
-        // Check if already liked
+        // Check if already liked — SELECT 1 is the correct pattern for existence checks,
+        // we only need rows.length, not any column value
         const existing = await pool.query(
-            'SELECT id FROM blog_likes WHERE user_id = $1 AND blog_id = $2',
+            'SELECT 1 FROM blog_likes WHERE user_id = $1 AND blog_id = $2',
             [userId, blogId]
         );
 
@@ -333,51 +355,58 @@ blog_router.post('/like/:blog_id', authenticateToken, async (req, res) => {
             likes_count: countResult.rows[0].likes_count
         });
     } catch (error) {
-        console.error('Error toggling like:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 
-blog_router.post('/publish/:blog_id', authenticateToken, async (req, res) => {
+blog_router.post('/publish/:blog_id', authenticateToken, async (req, res, next) => {
     const blogId = req.params.blog_id;
     const userId = req.user.id;
 
+    // Read-only check happens outside the transaction — no point locking rows for a SELECT
+    const blogResult = await pool.query(
+        'SELECT id, current_version_id, is_published FROM blogs WHERE id = $1 AND author_id = $2',
+        [blogId, userId]
+    );
+
+    if (blogResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Blog not found or not owned by you' });
+    }
+
+    const blog = blogResult.rows[0];
+
+    if (blog.is_published) {
+        return res.status(400).json({ message: 'Blog is already published' });
+    }
+
+    // The UPDATE and INSERT must succeed together — if published_versions insert fails,
+    // the blog must not be left in is_published=TRUE with no published_versions record
+    const client = await pool.connect();
     try {
-        const blogResult = await pool.query(
-            'SELECT id, current_version_id, is_published FROM blogs WHERE id = $1 AND author_id = $2',
-            [blogId, userId]
-        );
+        await client.query('BEGIN');
 
-        if (blogResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Blog not found or not owned by you' });
-        }
+        await client.query('UPDATE blogs SET is_published = TRUE WHERE id = $1', [blogId]);
 
-        const blog = blogResult.rows[0];
-
-        if (blog.is_published) {
-            return res.status(400).json({ message: 'Blog is already published' });
-        }
-
-        await pool.query('UPDATE blogs SET is_published = TRUE WHERE id = $1', [blogId]);
-
-        await pool.query(
+        await client.query(
             'INSERT INTO published_versions (blog_id, version_id) VALUES ($1, $2)',
             [blogId, blog.current_version_id]
         );
 
-        // Invalidate this author's cached profile pages (new blog appeared)
+        await client.query('COMMIT');
+
         await cacheHelper.invalidatePattern(`author:${userId}:*`);
-        // Invalidate ALL feed caches (new blog affects everyone's feed)
         await cacheHelper.invalidatePattern(`feed:*`);
 
         res.status(200).json({ message: 'Blog published successfully', blog_id: blogId });
     } catch (error) {
-        console.error('Error publishing blog:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        await client.query('ROLLBACK');
+        next(error);
+    } finally {
+        client.release();
     }
 });
 
-blog_router.get('/search', async (req, res) => {
+blog_router.get('/search', async (req, res, next) => {
     const searchQuery = req.query.q;
 
     if (!searchQuery) {
@@ -432,15 +461,12 @@ blog_router.get('/search', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error searching blogs:", error);
-        return res.status(500).json({
-            "message": "Internal server error"
-        });
+        next(error);
     }
 });
 
 // GET full blog for the reader page (with Redis caching)
-blog_router.get('/read/:blog_id', authenticateToken, async (req, res) => {
+blog_router.get('/read/:blog_id', authenticateToken, async (req, res, next) => {
     const blogId = req.params.blog_id;
     const userId = req.user.id;
 
@@ -492,12 +518,11 @@ blog_router.get('/read/:blog_id', authenticateToken, async (req, res) => {
             current_user_id: userId
         });
     } catch (err) {
-        console.error('Error fetching blog for reading:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        next(err);
     }
 });
 
-blog_router.get('/:blog_id/versions', authenticateToken, async (req, res) => {
+blog_router.get('/:blog_id/versions', authenticateToken, async (req, res, next) => {
     const { blog_id } = req.params;
     const user_id = req.user.id;
 
@@ -517,14 +542,11 @@ blog_router.get('/:blog_id/versions', authenticateToken, async (req, res) => {
         })
     }
     catch (err) {
-        console.error("Error fetching versions history", err);
-        res.status(500).json({
-            error: "Internal server error"
-        })
+        next(err);
     }
 });
 
-blog_router.get('/:blog_id/versions/:version_number', authenticateToken, async (req, res) => {
+blog_router.get('/:blog_id/versions/:version_number', authenticateToken, async (req, res, next) => {
     const { blog_id, version_number } = req.params;
     const author_id = req.user.id;
 
@@ -545,13 +567,12 @@ blog_router.get('/:blog_id/versions/:version_number', authenticateToken, async (
             res.status(404).json({ error: "Version not found" });
         }
     } catch (err) {
-        console.error('Error fetching version content:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        next(err);
     }
 });
 
 // ── POST a comment on a blog ──
-blog_router.post('/comment/:blog_id', authenticateToken, async (req, res) => {
+blog_router.post('/comment/:blog_id', authenticateToken, async (req, res, next) => {
     const userId = req.user.id;
     const blogId = req.params.blog_id;
     const { content } = req.body;
@@ -594,13 +615,12 @@ blog_router.post('/comment/:blog_id', authenticateToken, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error adding comment:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 
 // ── GET all comments for a blog (with pagination) ──
-blog_router.get('/comments/:blog_id', authenticateToken, async (req, res) => {
+blog_router.get('/comments/:blog_id', authenticateToken, async (req, res, next) => {
     const blogId = req.params.blog_id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
@@ -632,13 +652,12 @@ blog_router.get('/comments/:blog_id', authenticateToken, async (req, res) => {
             pagination: { page, limit, total, total_pages: Math.ceil(total / limit) }
         });
     } catch (error) {
-        console.error('Error fetching comments:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 
 // ── DELETE a comment ──
-blog_router.delete('/comment/:comment_id', authenticateToken, async (req, res) => {
+blog_router.delete('/comment/:comment_id', authenticateToken, async (req, res, next) => {
     const userId = req.user.id;
     const commentId = req.params.comment_id;
 
@@ -668,13 +687,12 @@ blog_router.delete('/comment/:comment_id', authenticateToken, async (req, res) =
 
         res.status(200).json({ message: 'Comment deleted' });
     } catch (error) {
-        console.error('Error deleting comment:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 
 // ── GET notifications (with pagination) ──
-blog_router.get('/notifications', authenticateToken, async (req, res) => {
+blog_router.get('/notifications', authenticateToken, async (req, res, next) => {
     const userId = req.user.id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
@@ -709,13 +727,12 @@ blog_router.get('/notifications', authenticateToken, async (req, res) => {
             unread_count: parseInt(unreadResult.rows[0].count)
         });
     } catch (error) {
-        console.error('Error fetching notifications:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 
 // ── PATCH mark all notifications as read ──
-blog_router.patch('/notifications/read', authenticateToken, async (req, res) => {
+blog_router.patch('/notifications/read', authenticateToken, async (req, res, next) => {
     const userId = req.user.id;
 
     try {
@@ -725,13 +742,12 @@ blog_router.patch('/notifications/read', authenticateToken, async (req, res) => 
         );
         res.status(200).json({ message: 'All notifications marked as read' });
     } catch (error) {
-        console.error('Error marking notifications as read:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 
 // ── Soft-delete a blog ──
-blog_router.delete('/delete/:blog_id', authenticateToken, async (req, res) => {
+blog_router.delete('/delete/:blog_id', authenticateToken, async (req, res, next) => {
     const userId = req.user.id;
     const blogId = req.params.blog_id;
 
@@ -752,60 +768,66 @@ blog_router.delete('/delete/:blog_id', authenticateToken, async (req, res) => {
 
         res.status(200).json({ message: 'Blog deleted successfully' });
     } catch (error) {
-        console.error('Error deleting blog:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 
 // ── Edit a published blog (creates new version & re-publishes) ──
-blog_router.put('/edit/:blog_id', authenticateToken, async (req, res) => {
+blog_router.put('/edit/:blog_id', authenticateToken, async (req, res, next) => {
     const userId = req.user.id;
     const blogId = req.params.blog_id;
     const { title, content } = req.body;
 
+    // Read-only checks happen outside the transaction
+    const blog = await pool.query(
+        'SELECT id, current_version_id FROM blogs WHERE id = $1 AND author_id = $2 AND is_deleted = FALSE',
+        [blogId, userId]
+    );
+
+    if (blog.rows.length === 0) {
+        return res.status(404).json({ error: 'Blog not found or not owned by you' });
+    }
+
+    const latestVersion = await pool.query(
+        'SELECT version_number FROM blog_versions WHERE blog_id = $1 ORDER BY version_number DESC LIMIT 1',
+        [blogId]
+    );
+    const newVersionNumber = (latestVersion.rows[0]?.version_number || 0) + 1;
+
+    // Generate embedding BEFORE opening the transaction
+    let vectorString;
     try {
-        const blog = await pool.query(
-            'SELECT id, current_version_id FROM blogs WHERE id = $1 AND author_id = $2 AND is_deleted = FALSE',
-            [blogId, userId]
-        );
-
-        if (blog.rows.length === 0) {
-            return res.status(404).json({ error: 'Blog not found or not owned by you' });
-        }
-
-        // Get latest version number
-        const latestVersion = await pool.query(
-            'SELECT version_number FROM blog_versions WHERE blog_id = $1 ORDER BY version_number DESC LIMIT 1',
-            [blogId]
-        );
-        const newVersionNumber = (latestVersion.rows[0]?.version_number || 0) + 1;
-
-        // Generate embedding for the new content
         const embeddingArray = await RecommenderService.generateEmbedding((title || '') + ' ' + (content || ''));
-        const vectorString = `[${embeddingArray.join(',')}]`;
+        vectorString = `[${embeddingArray.join(',')}]`;
+    } catch (error) {
+        return next(error);
+    }
 
-        // Create new version
-        const versionResult = await pool.query(
+    // The 3 writes (new version, update blog pointer, record in published_versions)
+    // must all succeed or all be rolled back
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const versionResult = await client.query(
             'INSERT INTO blog_versions (blog_id, version_number, title, content, parent_version_id, content_embedding) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
             [blogId, newVersionNumber, title, content, blog.rows[0].current_version_id, vectorString]
         );
         const newVersionId = versionResult.rows[0].id;
 
-        // Update blog
-        await pool.query(
+        await client.query(
             'UPDATE blogs SET title = $1, current_version_id = $2 WHERE id = $3',
             [title, newVersionId, blogId]
         );
 
-        // Record as published version
-        await pool.query(
+        await client.query(
             'INSERT INTO published_versions (blog_id, version_id) VALUES ($1, $2)',
             [blogId, newVersionId]
         );
 
-        // Invalidate cache — blog content changed!
+        await client.query('COMMIT');
+
         await cacheHelper.invalidate(`blog:${blogId}`);
-        // Also invalidate author page (blog title/content may have changed)
         await cacheHelper.invalidatePattern(`author:${userId}:*`);
 
         res.status(200).json({
@@ -814,8 +836,10 @@ blog_router.put('/edit/:blog_id', authenticateToken, async (req, res) => {
             version_number: newVersionNumber
         });
     } catch (error) {
-        console.error('Error editing blog:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        await client.query('ROLLBACK');
+        next(error);
+    } finally {
+        client.release();
     }
 });
 
@@ -825,7 +849,7 @@ blog_router.put('/edit/:blog_id', authenticateToken, async (req, res) => {
 //       Caching the whole response avoids all 3 on repeat visits.
 // INVALIDATION: When this author publishes/deletes/edits a blog,
 //               we call invalidatePattern("author:{id}:*") to wipe all pages.
-blog_router.get('/author/:author_id', async (req, res) => {
+blog_router.get('/author/:author_id', async (req, res, next) => {
     const authorId = req.params.author_id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -886,8 +910,7 @@ blog_router.get('/author/:author_id', async (req, res) => {
 
         res.status(200).json(data);
     } catch (error) {
-        console.error('Error fetching author page:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 

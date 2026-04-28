@@ -385,7 +385,7 @@ router.get('/login', (req, res) => res.send(HTML_LOGIN));
 router.get('/signup', (req, res) => res.send(HTML_SIGNUP));
 router.get('/forgot-password', (req, res) => res.send(HTML_FORGOT_PASSWORD));
 
-router.post('/login' , async (req, res)=>{
+router.post('/login', async (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
     if (await checkRateLimit(`login:${ip}`, 5, 60)) {
         return res.status(429).json({ message: 'Too many login attempts. Try again in 1 minute.' });
@@ -405,15 +405,59 @@ router.post('/login' , async (req, res)=>{
             return res.status(401).json({ message: 'Invalid password' });
         }
         const tokens = jwToken.jwtToken(user.rows[0].id, user.rows[0].username);
-        res.cookie('accessToken', tokens.Accesstoken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 15 * 60 * 1000 }); // 15 mins
-        res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        // Register the refresh token's jti in Redis — this is what rotation checks against.
+        // Key: rt:{jti}  Value: userId  TTL: 7 days (matches token expiry)
+        await redis.set(`rt:${tokens.jti}`, user.rows[0].id, 'EX', 7 * 24 * 60 * 60);
+        res.cookie('accessToken', tokens.Accesstoken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 15 * 60 * 1000 });
+        res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
         return res.status(200).json({ message: 'Logged in successfully' });
     } catch (error) {
-        console.error('Error during login:', error);
-        res.status(500).json({ message: 'Error during login' });
+        next(error);
     }
 
 })
+
+router.post('/refresh', async (req, res, next) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'No refresh token. Please log in.' });
+    }
+
+    // Step 1: Verify the JWT signature and expiry
+    let payload;
+    try {
+        payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || 'refresh_secret');
+    } catch (err) {
+        return res.status(403).json({ message: 'Invalid or expired refresh token. Please log in again.' });
+    }
+
+    const { id, username, jti } = payload;
+
+    // Step 2: Check if this jti is still registered in Redis
+    // If it's gone, one of two things happened:
+    //   a) The user already logged out (jti was deleted on logout)
+    //   b) This token was already used once and rotated — meaning someone is reusing an old token
+    // Either way, the correct response is to force re-login
+    const stored = await redis.get(`rt:${jti}`);
+    if (!stored) {
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+        return res.status(401).json({ message: 'Session expired or reuse detected. Please log in again.' });
+    }
+
+    // Step 3: Rotate — destroy the old jti immediately so it can never be used again
+    await redis.del(`rt:${jti}`);
+
+    // Step 4: Issue brand new access + refresh tokens and register the new jti
+    const newTokens = jwToken.jwtToken(id, username);
+    await redis.set(`rt:${newTokens.jti}`, id, 'EX', 7 * 24 * 60 * 60);
+
+    res.cookie('accessToken', newTokens.Accesstoken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', newTokens.refreshToken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+    return res.status(200).json({ message: 'Tokens refreshed successfully' });
+});
 
 function verify_email(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -421,7 +465,7 @@ function verify_email(email) {
 }
 
 // Step 1: Send OTP and store signup data
-router.post('/signup-request', async (req, res) => {
+router.post('/signup-request', async (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
     if (await checkRateLimit(`signup:${ip}`, 3, 60)) {
         return res.status(429).json({ message: 'Too many signup attempts. Try again in 1 minute.' });
@@ -467,13 +511,12 @@ router.post('/signup-request', async (req, res) => {
             return res.status(500).json({ message: 'Failed to send OTP' });
         }
     } catch (error) {
-        console.error('Error during signup request:', error);
-        res.status(500).json({ message: 'Error during signup' });
+        next(error);
     }
 });
 
 // Step 2: Verify OTP and create account
-router.post('/verify-otp', async (req, res) => {
+router.post('/verify-otp', async (req, res, next) => {
     const { email, otp } = req.body;
     
     // Verify OTP
@@ -502,12 +545,11 @@ router.post('/verify-otp', async (req, res) => {
             user: newuser.rows[0]
         });
     } catch (error) {
-        console.error('Error during OTP verification:', error);
-        res.status(500).json({ message: 'Error creating account' });
+        next(error);
     }
 });
 
-router.post('/login/forgot-password', async (req, res) => {
+router.post('/login/forgot-password', async (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
     if (await checkRateLimit(`forgot:${ip}`, 3, 60)) {
         return res.status(429).json({ message: 'Too many attempts. Try again in 1 minute.' });
@@ -528,13 +570,12 @@ router.post('/login/forgot-password', async (req, res) => {
             return res.status(500).json({ message: 'Failed to send OTP' });
         }   
     } catch (error) {
-        console.error('Error during forgot password:', error);
-        res.status(500).json({ message: 'Error during forgot password' });
+        next(error);
     }
 });
 
 // Step 2: Verify OTP for password reset
-router.post('/verify-reset-otp', async (req, res) => {
+router.post('/verify-reset-otp', async (req, res, next) => {
     const { email, otp } = req.body;
 
     const otpVerification = await verifyOTP(email, otp);
@@ -544,16 +585,19 @@ router.post('/verify-reset-otp', async (req, res) => {
     }
 
     const resetData = await getSignupData(email);
-    
+
     if (!resetData) {
         return res.status(400).json({ message: 'Password reset session expired. Please try again.' });
     }
-    
+
+    // Proof that OTP was completed — /reset-password checks this before allowing the update
+    await redis.set(`reset-verified:${email}`, '1', 'EX', 300);
+
     return res.status(200).json({ message: 'OTP verified successfully. You can now reset your password.' });
 });
 
 // Step 3: Reset password after OTP verification
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', async (req, res, next) => {
     const { email, newPassword, confirmPassword } = req.body;
     
     if (newPassword !== confirmPassword) {
@@ -564,6 +608,11 @@ router.post('/reset-password', async (req, res) => {
         return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
     
+    const verified = await redis.get(`reset-verified:${email}`);
+    if (!verified) {
+        return res.status(403).json({ message: 'OTP not verified. Please complete the reset flow first.' });
+    }
+
     try {
         // Check if user exists
         const userQuery = 'SELECT * FROM users WHERE email = $1';
@@ -573,18 +622,17 @@ router.post('/reset-password', async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
         
-        // Hash new password and update
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         const updateQuery = 'UPDATE users SET password = $1 WHERE email = $2 RETURNING id, username, email';
         const updateResult = await pool.query(updateQuery, [hashedPassword, email]);
+        await redis.del(`reset-verified:${email}`);
         
         return res.status(200).json({ 
             message: 'Password reset successfully',
             user: updateResult.rows[0]
         });
     } catch (error) {
-        console.error('Error during password reset:', error);
-        res.status(500).json({ message: 'Error during password reset' });
+        next(error);
     }
 });
 
@@ -593,7 +641,7 @@ router.post('/reset-password', async (req, res) => {
 
 
 // Get profile
-router.get('/profile', authenticateToken, async (req, res) => {
+router.get('/profile', authenticateToken, async (req, res, next) => {
     try {
         const result = await pool.query(
             'SELECT id, username, email, created_at FROM users WHERE id = $1',
@@ -604,13 +652,12 @@ router.get('/profile', authenticateToken, async (req, res) => {
         }
         res.status(200).json({ user: result.rows[0] });
     } catch (error) {
-        console.error('Error fetching profile:', error);
-        res.status(500).json({ message: 'Error fetching profile' });
+        next(error);
     }
 });
 
 // Update profile (username and/or email)
-router.put('/profile', authenticateToken, async (req, res) => {
+router.put('/profile', authenticateToken, async (req, res, next) => {
     let { username, email } = req.body;
     const userId = req.user.id;
 
@@ -646,13 +693,12 @@ router.put('/profile', authenticateToken, async (req, res) => {
 
         res.status(200).json({ message: 'Profile updated successfully', user: { username: updatedUsername, email: updatedEmail } });
     } catch (error) {
-        console.error('Error updating profile:', error);
-        res.status(500).json({ message: 'Error updating profile' });
+        next(error);
     }
 });
 
 // Change password (requires current password)
-router.post('/change-password', authenticateToken, async (req, res) => {
+router.post('/change-password', authenticateToken, async (req, res, next) => {
     const { currentPassword, newPassword, confirmPassword } = req.body;
     const userId = req.user.id;
 
@@ -681,21 +727,31 @@ router.post('/change-password', authenticateToken, async (req, res) => {
 
         res.status(200).json({ message: 'Password changed successfully' });
     } catch (error) {
-        console.error('Error changing password:', error);
-        res.status(500).json({ message: 'Error changing password' });
+        next(error);
     }
 });
 
-// Logout — blacklist tokens then clear cookies
-router.get('/logout', async (req, res) => {
+// Logout — blacklist the access token, cleanly delete the refresh token's jti
+router.get('/logout', async (req, res, next) => {
     const accessToken = req.cookies.accessToken;
     const refreshToken = req.cookies.refreshToken;
 
+    // Access token: blacklist it for the remaining 15 minutes of its life
+    // (it has no jti — blacklisting the full string is correct here)
     if (accessToken) {
         await redis.set(`blacklist:${accessToken}`, '1', 'EX', 15 * 60);
     }
+
+    // Refresh token: just delete its jti from Redis — clean, no TTL juggling needed
     if (refreshToken) {
-        await redis.set(`blacklist:${refreshToken}`, '1', 'EX', 7 * 24 * 60 * 60);
+        try {
+            const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || 'refresh_secret');
+            if (payload.jti) {
+                await redis.del(`rt:${payload.jti}`);
+            }
+        } catch (err) {
+            // Token already expired — nothing to clean up in Redis
+        }
     }
 
     res.clearCookie('accessToken');
