@@ -90,18 +90,68 @@
 
     async function searchBlogs() {
         const query = document.getElementById('searchInput').value;
-        if (!query) return loadFeed(); // Reload feed if search is empty
+        if (!query) return loadFeed();
 
-        document.getElementById('feedContainer').innerHTML = "<p>Analyzing exact semantic meaning...</p>";
+        document.getElementById('feedContainer').innerHTML = "<p>Searching blogs and authors...</p>";
         try {
             const response = await fetch(`/api/blogs/search?q=${encodeURIComponent(query)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
-            displayBlogs(data.results || []);
+            displaySearchResults(data.blogs || [], data.authors || []);
         } catch (error) {
             console.error("Error searching", error);
         }
+    }
+
+    function displaySearchResults(blogs, authors) {
+        const container = document.getElementById('feedContainer');
+        container.innerHTML = '';
+
+        if (authors.length === 0 && blogs.length === 0) {
+            container.innerHTML = "<p style='text-align:center'>No results found.</p>";
+            return;
+        }
+
+        if (authors.length > 0) {
+            const section = document.createElement('div');
+            section.innerHTML = `<h3 style="color:#a78bfa;margin-bottom:.75rem;">Authors</h3>`;
+            authors.forEach(author => {
+                const card = document.createElement('div');
+                card.className = 'blog-card';
+                card.style.cursor = 'pointer';
+                card.onclick = () => window.location.href = `/api/blogs/author-ui?id=${author.author_id}`;
+                card.innerHTML = `
+                    <h3 style="color:#2d3748;">👤 ${escapeHtml(author.username)}</h3>
+                    <p style="color:#718096;font-size:.85rem;">Member since ${new Date(author.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</p>
+                `;
+                section.appendChild(card);
+            });
+            container.appendChild(section);
+        }
+
+        if (blogs.length > 0) {
+            const section = document.createElement('div');
+            section.innerHTML = `<h3 style="color:#a78bfa;margin:.75rem 0;">Blogs</h3>`;
+            blogs.forEach(blog => {
+                const card = document.createElement('div');
+                card.className = 'blog-card';
+                card.innerHTML = `
+                    <h3 class="blog-title" style="cursor:pointer;" onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'">${escapeHtml(blog.title)}</h3>
+                    <p style="color:#64748b;font-size:.8rem;margin-bottom:.5rem;">by <a href="/api/blogs/author-ui?id=${blog.author_id}" style="color:#a78bfa;">${escapeHtml(blog.author || '')}</a></p>
+                    <div class="blog-content" style="cursor:pointer;" onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'">${escapeHtml((blog.content || '').substring(0, 300))}...</div>
+                    <button class="like-btn" onclick="likeBlog('${blog.blog_id}')">❤️ Like to tune profile</button>
+                `;
+                section.appendChild(card);
+            });
+            container.appendChild(section);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
     }
 
     async function likeBlog(blogId) {

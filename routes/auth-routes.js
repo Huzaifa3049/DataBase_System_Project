@@ -7,6 +7,28 @@ import { send_and_generate_OTP, verifyOTP, storeSignupData, getSignupData } from
 import authenticateToken from '../middleware/authorization.js';
 import redis from '../redis.js';
 import { checkRateLimit } from '../utils/rateLimiter.js';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const storage = multer.diskStorage({
+    destination: path.join(__dirname, '../uploads'),
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `avatar-${req.user.id}-${Date.now()}${ext}`);
+    }
+});
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) cb(null, true);
+        else cb(new Error('Only image files allowed'));
+    }
+});
 
 
 
@@ -644,7 +666,7 @@ router.post('/reset-password', async (req, res, next) => {
 router.get('/profile', authenticateToken, async (req, res, next) => {
     try {
         const result = await pool.query(
-            'SELECT id, username, email, created_at FROM users WHERE id = $1',
+            'SELECT id, username, email, created_at, profile_picture FROM users WHERE id = $1',
             [req.user.id]
         );
         if (result.rows.length === 0) {
@@ -654,6 +676,21 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+});
+
+router.post('/upload-avatar', authenticateToken, upload.single('avatar'), async (req, res, next) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        const url = `/uploads/${req.file.filename}`;
+        await pool.query('UPDATE users SET profile_picture = $1 WHERE id = $2', [url, req.user.id]);
+        res.json({ profile_picture: url });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/me', authenticateToken, (req, res) => {
+    res.json({ id: req.user.id, username: req.user.username });
 });
 
 // Update profile (username and/or email)

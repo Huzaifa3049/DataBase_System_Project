@@ -47,17 +47,43 @@
             margin-bottom: 0.5rem;
             color: #666;
         }
-        input[type="text"],
-        textarea {
+        input[type="text"] {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
         }
-        textarea {
-            height: 150px;
-            resize: vertical;
+        .content-editor {
+            width: 100%;
+            min-height: 250px;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            outline: none;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.6;
+            overflow-y: auto;
+        }
+        .content-editor:focus {
+            border-color: #007bff;
+        }
+        .content-editor img {
+            max-width: 100%;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+        .paste-hint {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 0.25rem;
+        }
+        .content-editor:empty:before {
+            content: attr(data-placeholder);
+            color: #aaa;
+            pointer-events: none;
         }
         .button-row {
             display: flex;
@@ -253,7 +279,8 @@
             </div>
             <div class="form-group">
                 <label for="content">Content</label>
-                <textarea id="content" placeholder="Write your blog content here..." required></textarea>
+                <div id="content" class="content-editor" contenteditable="true" data-placeholder="Write your blog content here..."></div>
+                <p class="paste-hint">💡 Paste images directly into the editor</p>
             </div>
             <div class="button-row">
                 <button type="button" class="btn-save" id="btnSaveDraft">Save Draft</button>
@@ -343,7 +370,7 @@
                 const data = await res.json();
                 if (res.ok) {
                     titleInput.value = data.title || '';
-                    contentInput.value = data.content || '';
+                    contentInput.innerHTML = data.content || '';
                     
                     // Close the sidebar automatically
                     versionSidebar.classList.remove('open');
@@ -368,6 +395,47 @@
             saveStatus.className = 'save-status';
         }
 
+        // Placeholder behaviour for contenteditable
+        contentInput.addEventListener('focus', () => {
+            if (contentInput.innerHTML === '') contentInput.dataset.empty = 'true';
+        });
+        contentInput.addEventListener('blur', () => {
+            contentInput.dataset.empty = contentInput.innerHTML === '' ? 'true' : 'false';
+        });
+
+        // Paste handler — converts pasted images to inline base64
+        contentInput.addEventListener('paste', (e) => {
+            const items = e.clipboardData && e.clipboardData.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        img.style.maxWidth = '100%';
+                        // Insert at cursor position
+                        const sel = window.getSelection();
+                        if (sel && sel.rangeCount) {
+                            const range = sel.getRangeAt(0);
+                            range.deleteContents();
+                            range.insertNode(img);
+                            range.setStartAfter(img);
+                            range.collapse(true);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        } else {
+                            contentInput.appendChild(img);
+                        }
+                        scheduleAutoSave();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+
         titleInput.addEventListener('input', scheduleAutoSave);
         contentInput.addEventListener('input', scheduleAutoSave);
 
@@ -376,7 +444,7 @@
         // createVersion = true  → manual save (INSERT new version checkpoint, with AI embedding)
         async function saveDraft(createVersion = false) {
             const title = titleInput.value.trim();
-            const content = contentInput.value.trim();
+            const content = contentInput.innerHTML.trim();
 
             if (!title && !content) return;
             if (isSaving) return;
@@ -443,7 +511,7 @@
             clearTimeout(saveTimer);
 
             const title = titleInput.value.trim();
-            const content = contentInput.value.trim();
+            const content = contentInput.innerHTML.trim();
 
             if (!title || !content) {
                 showMessage('Title and content are required to publish.', 'error');
@@ -479,7 +547,8 @@
                     currentVersionNumber = 0;
                     versionInfo.textContent = '';
                     saveStatus.textContent = '';
-                    document.getElementById('blogForm').reset();
+                    titleInput.value = '';
+                    contentInput.innerHTML = '';
                 } else {
                     showMessage(result.message || result.error || 'Failed to publish', 'error');
                 }
@@ -504,7 +573,7 @@
                         if (targetDraft) {
                             currentBlogId = targetDraft.blog_id;
                             titleInput.value = targetDraft.title || '';
-                            contentInput.value = targetDraft.content || '';
+                            contentInput.innerHTML = targetDraft.content || '';
                             saveStatus.textContent = 'Draft loaded';
                             saveStatus.className = 'save-status saved';
                             btnToggleVersions.style.display = 'block';
@@ -527,7 +596,7 @@
             if (pendingDraft) {
                 currentBlogId = pendingDraft.blog_id;
                 titleInput.value = pendingDraft.title || '';
-                contentInput.value = pendingDraft.content || '';
+                contentInput.innerHTML = pendingDraft.content || '';
                 document.getElementById('draftBanner').style.display = 'none';
                 saveStatus.textContent = 'Draft loaded';
                 saveStatus.className = 'save-status saved';

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(psql -U postgres -d db_course_project -c \"ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;\")"
+    ]
+  }
+}

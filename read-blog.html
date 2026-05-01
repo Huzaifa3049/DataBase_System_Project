@@ -293,6 +293,9 @@
         <span class="icon">💬</span>
         <span id="commentCount">0</span>
     </button>
+    <button class="action-btn" id="saveBtn" onclick="toggleSave()">
+        <span class="icon" id="saveIcon">🔖</span>
+    </button>
 </div>
 
 <script>
@@ -301,6 +304,7 @@
     const blogId = params.get('id');
 
     let isLiked = false;
+    let isSaved = false;
     let commentsOpen = false;
     let currentUserId = null;
     let blogAuthorId = null;
@@ -338,6 +342,7 @@
             currentUserId = blog.current_user_id;
             blogAuthorId = blog.author_id;
             updateLikeUI();
+            loadSaveState();
 
             // Show article, hide loader
             document.getElementById('loadingState').style.display = 'none';
@@ -381,6 +386,35 @@
             }
         } catch (err) {
             console.error('Error toggling like:', err);
+        }
+    }
+
+    async function loadSaveState() {
+        try {
+            const res = await fetch('/api/blogs/my-saved');
+            if (!res.ok) return;
+            const data = await res.json();
+            isSaved = data.blogs.some(b => b.blog_id === blogId);
+            updateSaveUI();
+        } catch (err) { /* not logged in */ }
+    }
+
+    function updateSaveUI() {
+        document.getElementById('saveIcon').textContent = isSaved ? '🔖' : '🔖';
+        document.getElementById('saveBtn').style.opacity = isSaved ? '1' : '0.5';
+        document.getElementById('saveBtn').title = isSaved ? 'Unsave' : 'Save';
+    }
+
+    async function toggleSave() {
+        try {
+            const method = isSaved ? 'DELETE' : 'POST';
+            const res = await fetch(`/api/blogs/save/${blogId}`, { method });
+            if (res.ok) {
+                isSaved = !isSaved;
+                updateSaveUI();
+            }
+        } catch (err) {
+            console.error('Error toggling save:', err);
         }
     }
 

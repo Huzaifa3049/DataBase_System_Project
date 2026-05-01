@@ -1,85 +1,66 @@
 -- =============================================
 -- DATABASE SETUP FOR DB COURSE PROJECT
 -- =============================================
--- Run this file ONCE to create your project database and tables.
--- 
--- HOW TO RUN:
---   Option 1: Use a VS Code PostgreSQL extension (recommended)
---             Connect to localhost:5432 with user 'postgres', 
---             then run this file.
+-- Run this file via the Node.js runner:
+--   node run_setup.js
 --
---   Option 2: From terminal:
---             psql -U postgres -f setup.sql
+-- Or via psql (if installed and on PATH):
+--   psql -U postgres -f setup.sql
 -- =============================================
-
--- Step 1: Create the project database (connect to 'postgres' default db first)
--- NOTE: You cannot run CREATE DATABASE inside a transaction block in some tools.
--- If this fails, run it separately or create the database manually first.
-
-CREATE DATABASE IF NOT EXISTS db_course_project;
-
--- Step 2: Connect to the new database
--- In psql: \c db_course_project
--- In VS Code extension: switch your connection to 'db_course_project'
-\c db_course_project
 
 -- =============================================
 -- EXTENSIONS
 -- =============================================
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- =============================================
 -- TABLE DEFINITIONS
 -- =============================================
 
 -- Users table (for authentication)
+-- NOTE: id is UUID so that follows.follower_id / following_id can reference it
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    otp_verified BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username        VARCHAR(100) UNIQUE NOT NULL,
+    email           VARCHAR(255) UNIQUE NOT NULL,
+    password        VARCHAR(255) NOT NULL,
+    otp_verified    BOOLEAN DEFAULT FALSE,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    profile_picture TEXT
 );
+
+-- Migration: add profile_picture to existing installs
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;
 
 -- =============================================
 -- INDEXES
 -- =============================================
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 
--- =============================================
--- SAMPLE DATA (optional - uncomment cto insert)
--- =============================================
--- INSERT INTO Table1 (name, description) VALUES 
---     ('Item 1', 'First sample item'),
---     ('Item 2', 'Second sample item'),
---     ('Item 3', 'Third sample item');
-
-SELECT 'Setup complete! Tables created successfully.' AS status;
-
 -- Blogs table
 CREATE TABLE IF NOT EXISTS blogs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title TEXT NOT NULL,
-    author_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP,
-    is_deleted BOOLEAN DEFAULT FALSE,
-    is_published BOOLEAN DEFAULT FALSE,
-    likes_count INT NOT NULL DEFAULT 0,
-    comments_count INT NOT NULL DEFAULT 0,
-    shares_count INT NOT NULL DEFAULT 0
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title              TEXT NOT NULL,
+    author_id          UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at         TIMESTAMPTZ DEFAULT NOW(),
+    updated_at         TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at         TIMESTAMPTZ,
+    is_deleted         BOOLEAN DEFAULT FALSE,
+    is_published       BOOLEAN DEFAULT FALSE,
+    likes_count        INT NOT NULL DEFAULT 0,
+    comments_count     INT NOT NULL DEFAULT 0,
+    shares_count       INT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS blog_versions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    blog_id UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
-    version_number INT NOT NULL,
-    title TEXT,
-    content TEXT NOT NULL,
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    blog_id           UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    version_number    INT NOT NULL,
+    title             TEXT,
+    content           TEXT NOT NULL,
     parent_version_id UUID,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at        TIMESTAMPTZ DEFAULT NOW(),
 
     CONSTRAINT fk_parent_version
         FOREIGN KEY (parent_version_id)
@@ -91,50 +72,72 @@ CREATE TABLE IF NOT EXISTS blog_versions (
 );
 
 ALTER TABLE blogs
-ADD COLUMN current_version_id UUID;
+    ADD COLUMN IF NOT EXISTS current_version_id UUID;
 
 ALTER TABLE blogs
-ADD CONSTRAINT fk_current_version
-FOREIGN KEY (current_version_id)
-REFERENCES blog_versions(id)
-ON DELETE SET NULL;
+    DROP CONSTRAINT IF EXISTS fk_current_version;
+
+ALTER TABLE blogs
+    ADD CONSTRAINT fk_current_version
+    FOREIGN KEY (current_version_id)
+    REFERENCES blog_versions(id)
+    ON DELETE SET NULL;
 
 CREATE TABLE IF NOT EXISTS published_versions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    blog_id UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
-    version_id UUID NOT NULL REFERENCES blog_versions(id) ON DELETE CASCADE,
-    published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    blog_id      UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    version_id   UUID NOT NULL REFERENCES blog_versions(id) ON DELETE CASCADE,
+    published_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS blog_likes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    blog_id UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    blog_id    UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT unique_user_blog_like UNIQUE (user_id, blog_id)
 );
 
 CREATE TABLE IF NOT EXISTS blog_comments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    blog_id UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    blog_id    UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content    TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_blog_comments_blog_id ON blog_comments(blog_id);
 
 CREATE TABLE IF NOT EXISTS notifications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    recipient_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    actor_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    blog_id UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
-    type VARCHAR(20) NOT NULL CHECK (type IN ('like', 'comment')),
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recipient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    actor_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    blog_id      UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    type         VARCHAR(20) NOT NULL CHECK (type IN ('like', 'comment')),
+    is_read      BOOLEAN DEFAULT FALSE,
+    created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient
+    ON notifications(recipient_id, is_read, created_at DESC);
+
+-- Follows table (social graph)
+CREATE TABLE IF NOT EXISTS follows (
+    follower_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    following_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (follower_id, following_id),
+    CHECK (follower_id != following_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
+
+CREATE TABLE IF NOT EXISTS saved_blogs (
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    blog_id    UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (user_id, blog_id)
+);
 
 -- =============================================
 -- TRIGGERS & FUNCTIONS
@@ -144,7 +147,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipien
 CREATE OR REPLACE FUNCTION update_blog_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
+    NEW.updated_at = NOW();
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -198,7 +201,7 @@ CREATE TRIGGER trg_sync_comments_count
 -- =============================================
 -- ADDITIONAL INDEXES
 -- =============================================
-CREATE INDEX IF NOT EXISTS idx_blogs_author ON blogs(author_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_author    ON blogs(author_id);
 CREATE INDEX IF NOT EXISTS idx_blogs_published ON blogs(is_published, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_blog_likes_blog ON blog_likes(blog_id);
 

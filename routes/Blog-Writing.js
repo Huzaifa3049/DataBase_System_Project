@@ -3,7 +3,7 @@ import pool from '../db.js';
 import authenticateToken from '../middleware/authorization.js';
 import RecommenderService from '../utils/recommender.js';
 import cacheHelper from '../utils/cache.js';
-import { embeddingQueue } from '../queues/index.js';
+import { embeddingQueue, tasteProfileQueue } from '../queues/index.js';
 
 const blog_router = express.Router();
 
@@ -62,18 +62,6 @@ blog_router.post('/save-draft', authenticateToken, async (req, res, next) => {
     let { blog_id } = req.body;
     const author_id = req.user.id;
 
-    // On manual saves, generate the embedding BEFORE opening the transaction
-    // (slow external call — must not block a DB connection while it runs)
-    let vectorString = null;
-    if (create_version) {
-        try {
-            const embeddingArray = await RecommenderService.generateEmbedding((title || '') + ' ' + (content || ''));
-            vectorString = `[${embeddingArray.join(',')}]`;
-        } catch (error) {
-            return next(error);
-        }
-    }
-
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -108,10 +96,10 @@ blog_router.post('/save-draft', authenticateToken, async (req, res, next) => {
                 ? latestVersion.rows[0].version_number + 1
                 : 1;
 
-            // vectorString was already generated above, before the transaction
+            // content_embedding starts NULL — worker fills it in background
             const insertVersion = await client.query(
-                'INSERT INTO blog_versions (blog_id, version_number, title, content, content_embedding) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-                [blog_id, versionNumber, title, content, vectorString]
+                'INSERT INTO blog_versions (blog_id, version_number, title, content) VALUES ($1, $2, $3, $4) RETURNING id',
+                [blog_id, versionNumber, title, content]
             );
             versionId = insertVersion.rows[0].id;
             isNewVersion = true;
@@ -131,6 +119,11 @@ blog_router.post('/save-draft', authenticateToken, async (req, res, next) => {
         await client.query('UPDATE blogs SET current_version_id = $1 WHERE id = $2', [versionId, blog_id]);
 
         await client.query('COMMIT');
+
+        // Queue embedding only when a new version was created
+        if (isNewVersion) {
+            await embeddingQueue.add('generate', { blogId: blog_id, versionId, title, content });
+        }
 
         res.status(200).json({
             blog_id,
@@ -192,6 +185,55 @@ blog_router.get('/my-liked', authenticateToken, async (req, res, next) => {
         `;
         const result = await pool.query(query, [user_id]);
         res.status(200).json({ blogs: result.rows });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// POST /api/blogs/save/:blogId — save a blog
+blog_router.post('/save/:blogId', authenticateToken, async (req, res, next) => {
+    const userId = req.user.id;
+    const { blogId } = req.params;
+    try {
+        await pool.query(
+            'INSERT INTO saved_blogs (user_id, blog_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+            [userId, blogId]
+        );
+        res.json({ message: 'Blog saved' });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// DELETE /api/blogs/save/:blogId — unsave a blog
+blog_router.delete('/save/:blogId', authenticateToken, async (req, res, next) => {
+    const userId = req.user.id;
+    const { blogId } = req.params;
+    try {
+        await pool.query(
+            'DELETE FROM saved_blogs WHERE user_id = $1 AND blog_id = $2',
+            [userId, blogId]
+        );
+        res.json({ message: 'Blog unsaved' });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// GET /api/blogs/my-saved — get all saved blogs
+blog_router.get('/my-saved', authenticateToken, async (req, res, next) => {
+    const userId = req.user.id;
+    try {
+        const result = await pool.query(`
+            SELECT b.id AS blog_id, b.title, bv.content, b.created_at, u.username AS author
+            FROM saved_blogs sb
+            JOIN blogs b ON sb.blog_id = b.id
+            JOIN blog_versions bv ON b.current_version_id = bv.id
+            JOIN users u ON b.author_id = u.id
+            WHERE sb.user_id = $1 AND b.is_published = TRUE AND b.is_deleted = FALSE
+            ORDER BY sb.created_at DESC
+        `, [userId]);
+        res.json({ blogs: result.rows });
     } catch (err) {
         next(err);
     }
@@ -327,19 +369,8 @@ blog_router.post('/like/:blog_id', authenticateToken, async (req, res, next) => 
             }
         }
 
-        // Update taste profile
-        const tasteProfileQuery = `
-            UPDATE users 
-            SET taste_profile = (
-                SELECT AVG(bv.content_embedding) 
-                FROM blog_likes bl
-                JOIN published_versions pv ON bl.blog_id = pv.blog_id
-                JOIN blog_versions bv ON pv.version_id = bv.id
-                WHERE bl.user_id = $1
-            )
-            WHERE id = $1;
-        `;
-        await pool.query(tasteProfileQuery, [userId]);
+        // Taste profile update is slow vector math — runs in background
+        await tasteProfileQueue.add('update', { userId });
 
         // Get updated count
         const countResult = await pool.query('SELECT likes_count FROM blogs WHERE id = $1', [blogId]);
@@ -410,54 +441,77 @@ blog_router.get('/search', async (req, res, next) => {
     const searchQuery = req.query.q;
 
     if (!searchQuery) {
-        return res.status(400).json({
-            "message": "Please provide a search query"
-        });
+        return res.status(400).json({ message: 'Please provide a search query' });
     }
 
     try {
-        const search_in_title = `
-            SELECT
-                b.id as blog_id,
-                b.title,
-                bv.content
-            FROM blogs b
-            JOIN blog_versions bv ON b.current_version_id = bv.id
-            WHERE b.title ILIKE $1
-              AND b.is_published = TRUE
-              AND b.is_deleted = FALSE
-            LIMIT 10;
-        `;
-        const titleResults = await pool.query(search_in_title, [`%${searchQuery}%`]);
+        const pattern = `%${searchQuery}%`;
 
-        if (titleResults.rows.length > 0) {
+        // Title + author username text match (run in parallel)
+        const [titleRes, authorRes] = await Promise.all([
+            pool.query(`
+                SELECT
+                    b.id AS blog_id,
+                    b.title,
+                    bv.content,
+                    u.id AS author_id,
+                    u.username AS author,
+                    'blog' AS result_type
+                FROM blogs b
+                JOIN blog_versions bv ON b.current_version_id = bv.id
+                JOIN users u ON b.author_id = u.id
+                WHERE b.title ILIKE $1
+                  AND b.is_published = TRUE
+                  AND b.is_deleted = FALSE
+                LIMIT 10
+            `, [pattern]),
+            pool.query(`
+                SELECT
+                    u.id AS author_id,
+                    u.username,
+                    u.created_at,
+                    'author' AS result_type
+                FROM users u
+                WHERE u.username ILIKE $1
+                LIMIT 5
+            `, [pattern])
+        ]);
+
+        // If text matches found, return them combined
+        if (titleRes.rows.length > 0 || authorRes.rows.length > 0) {
             return res.status(200).json({
-                "message": "Search results fetched successfully (Title Match)",
-                "results": titleResults.rows
+                message: 'Search results fetched successfully',
+                blogs: titleRes.rows,
+                authors: authorRes.rows
             });
         }
+
+        // Fall back to vector similarity search on blogs
         const embedded_query = await RecommenderService.generateEmbedding(searchQuery);
         const vectorString = `[${embedded_query.join(',')}]`;
 
-        const search_query = `
-            SELECT 
-                b.id as blog_id,
+        const vecRes = await pool.query(`
+            SELECT
+                b.id AS blog_id,
                 b.title,
                 bv.content,
-                (bv.content_embedding <=> $1) as similarity_score
+                u.id AS author_id,
+                u.username AS author,
+                (bv.content_embedding <=> $1) AS similarity_score,
+                'blog' AS result_type
             FROM blogs b
             JOIN blog_versions bv ON b.current_version_id = bv.id
+            JOIN users u ON b.author_id = u.id
             WHERE b.is_published = TRUE
-            AND b.is_deleted = FALSE
+              AND b.is_deleted = FALSE
             ORDER BY similarity_score ASC
-            LIMIT 10;
-        `;
-
-        const result = await pool.query(search_query, [vectorString]);
+            LIMIT 10
+        `, [vectorString]);
 
         return res.status(200).json({
-            "message": "Search results fetched successfully",
-            "results": result.rows
+            message: 'Search results fetched successfully',
+            blogs: vecRes.rows,
+            authors: []
         });
 
     } catch (error) {
@@ -794,24 +848,13 @@ blog_router.put('/edit/:blog_id', authenticateToken, async (req, res, next) => {
     );
     const newVersionNumber = (latestVersion.rows[0]?.version_number || 0) + 1;
 
-    // Generate embedding BEFORE opening the transaction
-    let vectorString;
-    try {
-        const embeddingArray = await RecommenderService.generateEmbedding((title || '') + ' ' + (content || ''));
-        vectorString = `[${embeddingArray.join(',')}]`;
-    } catch (error) {
-        return next(error);
-    }
-
-    // The 3 writes (new version, update blog pointer, record in published_versions)
-    // must all succeed or all be rolled back
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
         const versionResult = await client.query(
-            'INSERT INTO blog_versions (blog_id, version_number, title, content, parent_version_id, content_embedding) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-            [blogId, newVersionNumber, title, content, blog.rows[0].current_version_id, vectorString]
+            'INSERT INTO blog_versions (blog_id, version_number, title, content, parent_version_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [blogId, newVersionNumber, title, content, blog.rows[0].current_version_id]
         );
         const newVersionId = versionResult.rows[0].id;
 
@@ -826,6 +869,8 @@ blog_router.put('/edit/:blog_id', authenticateToken, async (req, res, next) => {
         );
 
         await client.query('COMMIT');
+
+        await embeddingQueue.add('generate', { blogId, versionId: newVersionId, title, content });
 
         await cacheHelper.invalidate(`blog:${blogId}`);
         await cacheHelper.invalidatePattern(`author:${userId}:*`);
@@ -866,7 +911,7 @@ blog_router.get('/author/:author_id', async (req, res, next) => {
 
                 // Query 1: Author info
                 const authorResult = await pool.query(
-                    'SELECT id, username, created_at FROM users WHERE id = $1',
+                    'SELECT id, username, created_at, profile_picture FROM users WHERE id = $1',
                     [authorId]
                 );
 

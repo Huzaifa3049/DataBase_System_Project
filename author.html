@@ -39,6 +39,10 @@
             display: flex; align-items: center; justify-content: center;
             font-weight: 700; font-size: 2rem; color: #fff;
             margin: 0 auto 1rem;
+            overflow: hidden;
+        }
+        .author-avatar img {
+            width: 100%; height: 100%; object-fit: cover;
         }
         .author-name { font-size: 1.8rem; font-weight: 700; color: #f8fafc; }
         .author-since { font-size: .85rem; color: #94a3b8; margin-top: .3rem; }
@@ -108,6 +112,28 @@
 
         .fade-in { animation: fadeIn .5s ease-out; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+        .follow-btn {
+            margin-top: 1rem;
+            padding: .55rem 1.6rem;
+            border-radius: 999px;
+            border: none;
+            font-size: .9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .follow-btn.follow {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+        .follow-btn.follow:hover { opacity: .85; }
+        .follow-btn.unfollow {
+            background: rgba(255,255,255,0.08);
+            color: #94a3b8;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .follow-btn.unfollow:hover { background: rgba(239,68,68,0.15); color: #f87171; border-color: #f87171; }
     </style>
 </head>
 <body>
@@ -128,6 +154,9 @@
         <div class="author-name" id="authorName"></div>
         <div class="author-since" id="authorSince"></div>
         <div class="author-stats" id="authorStats"></div>
+        <div id="followSection" style="display:none;">
+            <button class="follow-btn" id="followBtn" onclick="toggleFollow()"></button>
+        </div>
     </div>
 
     <div class="blog-list" id="blogList"></div>
@@ -138,6 +167,72 @@
     const params = new URLSearchParams(window.location.search);
     const authorId = params.get('id');
     let currentPage = 1;
+    let isFollowing = false;
+
+    async function getCurrentUserId() {
+        try {
+            const res = await fetch('/api/auth/me', { credentials: 'include' });
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data.id;
+        } catch { return null; }
+    }
+
+    async function loadFollowState(currentUserId) {
+        if (!currentUserId || currentUserId === authorId) return;
+
+        const res = await fetch(`/api/follow/${authorId}/stats`);
+        const stats = await res.json();
+
+        // Check if current user follows this author
+        const checkRes = await fetch(`/api/follow/${authorId}/is-following`, { credentials: 'include' });
+        if (checkRes.ok) {
+            const data = await checkRes.json();
+            isFollowing = data.following;
+        }
+
+        updateFollowButton();
+        document.getElementById('followSection').style.display = 'block';
+
+        // Update stats display
+        const statsEl = document.getElementById('authorStats');
+        const blogsSpan = statsEl.querySelector('span');
+        statsEl.innerHTML = `
+            ${blogsSpan ? blogsSpan.outerHTML : ''}
+            <span><strong>${stats.followers}</strong> followers</span>
+            <span><strong>${stats.following}</strong> following</span>
+        `;
+    }
+
+    function updateFollowButton() {
+        const btn = document.getElementById('followBtn');
+        if (isFollowing) {
+            btn.textContent = 'Unfollow';
+            btn.className = 'follow-btn unfollow';
+        } else {
+            btn.textContent = 'Follow';
+            btn.className = 'follow-btn follow';
+        }
+    }
+
+    async function toggleFollow() {
+        const method = isFollowing ? 'DELETE' : 'POST';
+        const res = await fetch(`/api/follow/${authorId}`, { method, credentials: 'include' });
+        if (res.ok) {
+            isFollowing = !isFollowing;
+            updateFollowButton();
+            // Refresh stats
+            const statsRes = await fetch(`/api/follow/${authorId}/stats`);
+            const stats = await statsRes.json();
+            const statsEl = document.getElementById('authorStats');
+            const blogsSpan = statsEl.querySelector('span');
+            statsEl.innerHTML = `
+                ${blogsSpan ? blogsSpan.outerHTML : ''}
+                <span><strong>${stats.followers}</strong> followers</span>
+                <span><strong>${stats.following}</strong> following</span>
+            `;
+        }
+    }
 
     async function loadAuthorPage(page = 1) {
         if (!authorId) {
@@ -157,12 +252,20 @@
 
             // Author header
             const author = data.author;
-            document.getElementById('authorAvatar').textContent = author.username.charAt(0).toUpperCase();
+            const avatarEl = document.getElementById('authorAvatar');
+            if (author.profile_picture) {
+                avatarEl.innerHTML = `<img src="${author.profile_picture}" alt="${escapeHtml(author.username)}">`;
+            } else {
+                avatarEl.textContent = author.username.charAt(0).toUpperCase();
+            }
             document.getElementById('authorName').textContent = author.username;
             document.getElementById('authorSince').textContent = 'Member since ' + new Date(author.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
             document.getElementById('authorStats').innerHTML = `
                 <span><strong>${data.pagination.total}</strong> published blogs</span>
             `;
+
+            const currentUserId = await getCurrentUserId();
+            await loadFollowState(currentUserId);
 
             // Blog list
             const list = document.getElementById('blogList');

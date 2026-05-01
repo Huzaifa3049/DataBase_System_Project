@@ -37,6 +37,31 @@
         }
         .profile-card h2 { margin-bottom: 1.5rem; font-size: 1.2rem; color: #2d3748; }
 
+        .avatar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .avatar {
+            width: 80px; height: 80px; border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #e2e8f0;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .avatar:hover { opacity: 0.75; }
+        .avatar-initials {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(135deg, #4a90e2, #764ba2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 700; color: white;
+            cursor: pointer; flex-shrink: 0;
+            transition: opacity 0.2s;
+        }
+        .avatar-initials:hover { opacity: 0.75; }
+        .avatar-hint { font-size: 0.75rem; color: #999; margin-top: 0.3rem; }
+
         .profile-info {
             display: grid;
             grid-template-columns: 120px 1fr;
@@ -245,6 +270,18 @@
         <!-- Profile Details Card -->
         <div class="profile-card">
             <h2>Account Details</h2>
+
+            <div class="avatar-wrap">
+                <div id="avatarContainer">
+                    <div class="avatar-initials" id="avatarInitials" onclick="document.getElementById('avatarInput').click()"></div>
+                </div>
+                <div>
+                    <div style="font-weight:600;color:#2d3748;" id="avatarName">Loading...</div>
+                    <div class="avatar-hint">Click avatar to change photo</div>
+                </div>
+                <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+            </div>
+
             <div class="profile-info" id="profileInfo">
                 <span class="label">Username</span>
                 <span class="value" id="displayUsername">Loading...</span>
@@ -308,6 +345,7 @@
             <button class="tab active" onclick="switchTab('published')">Published</button>
             <button class="tab" onclick="switchTab('drafts')">Drafts</button>
             <button class="tab" onclick="switchTab('liked')">Liked</button>
+            <button class="tab" onclick="switchTab('saved')">Saved</button>
         </div>
         <div class="tab-content">
             <div class="tab-panel active" id="panel-published">
@@ -317,6 +355,9 @@
                 <div class="loading">Loading...</div>
             </div>
             <div class="tab-panel" id="panel-liked">
+                <div class="loading">Loading...</div>
+            </div>
+            <div class="tab-panel" id="panel-saved">
                 <div class="loading">Loading...</div>
             </div>
         </div>
@@ -335,12 +376,41 @@
                     document.getElementById('displayCreatedAt').textContent = new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
                     document.getElementById('editUsername').value = user.username;
                     document.getElementById('editEmail').value = user.email;
+                    document.getElementById('avatarName').textContent = user.username;
+                    renderAvatar(user.profile_picture, user.username);
                 } else {
                     window.location.href = '/api/auth/login';
                 }
             } catch (err) {
                 console.error('Error loading profile:', err);
             }
+        }
+
+        function renderAvatar(url, username) {
+            const container = document.getElementById('avatarContainer');
+            if (url) {
+                container.innerHTML = `<img class="avatar" src="${url}" alt="avatar" onclick="document.getElementById('avatarInput').click()">`;
+            } else {
+                container.innerHTML = `<div class="avatar-initials" onclick="document.getElementById('avatarInput').click()">${username.charAt(0).toUpperCase()}</div>`;
+            }
+        }
+
+        async function uploadAvatar(input) {
+            if (!input.files || !input.files[0]) return;
+            const formData = new FormData();
+            formData.append('avatar', input.files[0]);
+            try {
+                const res = await fetch('/api/auth/upload-avatar', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    renderAvatar(data.profile_picture, document.getElementById('avatarName').textContent);
+                } else {
+                    alert(data.error || 'Upload failed');
+                }
+            } catch (err) {
+                alert('Upload failed');
+            }
+            input.value = '';
         }
 
         // --- Toggle edit sections ---
@@ -489,7 +559,7 @@
                     '</div>';
             }
 
-            let clickable = (type === 'published' || type === 'liked');
+            let clickable = (type === 'published' || type === 'liked' || type === 'saved');
             let openTag = clickable ? '<div class="blog-card" style="cursor:pointer;" onclick="window.location.href=\'/api/blogs/read-ui?id=' + blog.blog_id + '\'">' : '<div class="blog-card">';
 
             return openTag +
@@ -522,11 +592,27 @@
             return div.innerHTML;
         }
 
+        async function loadSaved() {
+            const panel = document.getElementById('panel-saved');
+            try {
+                const res = await fetch('/api/blogs/my-saved');
+                const data = await res.json();
+                if (res.ok && data.blogs.length > 0) {
+                    panel.innerHTML = data.blogs.map(b => blogCard(b, 'saved')).join('');
+                } else {
+                    panel.innerHTML = '<div class="empty-state">No saved blogs yet. <a href="/api/blogs/feed-ui">Explore the feed!</a></div>';
+                }
+            } catch (err) {
+                panel.innerHTML = '<div class="empty-state">Failed to load saved blogs.</div>';
+            }
+        }
+
         // --- Init ---
         loadProfile();
         loadPublished();
         loadDrafts();
         loadLiked();
+        loadSaved();
         loadNotifications();
 
         // --- Notifications ---

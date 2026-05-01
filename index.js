@@ -4,6 +4,7 @@ import pool from './db.js';
 import router from './routes/auth-routes.js';
 import dotenv from 'dotenv';
 import blog_router from './routes/Blog-Writing.js';
+import follow_router from './routes/follow-routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import helmet from 'helmet';
@@ -27,8 +28,10 @@ app.use(helmet({
     contentSecurityPolicy: false  // inline scripts in server-rendered HTML — CSP needs nonces to work here
 }));
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', router);
 app.use('/api/blogs', blog_router);
+app.use('/api/follow', follow_router);
 
 // Serve the dashboard UI
 app.get('/api/dashboard', (req, res) => {
