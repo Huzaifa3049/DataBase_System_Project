@@ -182,8 +182,6 @@ h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;t
 <body>
 <div class="card">
   <div class="brand"><div class="brand-mark">L</div><span>Lumen</span></div>
-  <div class="step-dots"><div class="dot active" id="dot1"></div><div class="dot" id="dot2"></div></div>
-
   <div id="signupStep1">
     <h2>Create account</h2>
     <p class="sub">Join Lumen and start writing</p>
@@ -192,26 +190,13 @@ h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;t
       <div class="field"><label>Email</label><input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email" /></div>
       <div class="field"><label>Password</label><input type="password" id="signupPassword" placeholder="••••••••" required autocomplete="new-password" /></div>
       <div class="field"><label>Confirm Password</label><input type="password" id="signupConfirm" placeholder="••••••••" required autocomplete="new-password" /></div>
-      <button class="btn" type="submit" id="step1Btn">Send OTP</button>
+      <button class="btn" type="submit" id="step1Btn">Create Account</button>
     </form>
     <div class="msg" id="messageStep1"></div>
     <div class="links">Already have an account? <a href="/api/auth/login">Sign in</a></div>
   </div>
-
-  <div id="signupStep2" class="hidden">
-    <h2>Verify email</h2>
-    <p class="otp-hint">Enter the 6-digit code sent to your email</p>
-    <form id="signupStep2Form" onsubmit="handleSignupStep2(event)">
-      <div class="field"><label>OTP Code</label><input type="text" id="signupOTP" placeholder="000000" maxlength="6" required inputmode="numeric" pattern="[0-9]{6}" /></div>
-      <button class="btn" type="submit" id="step2Btn">Verify & Create Account</button>
-      <button class="btn btn-ghost" type="button" onclick="backToStep1(event)">← Back</button>
-    </form>
-    <div class="msg" id="messageStep2"></div>
-  </div>
 </div>
 <script>
-    let currentEmail = '';
-
     function showMessage(elementId, text, type) {
         const el = document.getElementById(elementId);
         el.textContent = text;
@@ -219,25 +204,10 @@ h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;t
         el.style.display = text ? 'block' : 'none';
     }
 
-    function showStep(stepNumber) {
-        document.getElementById('signupStep1').classList.toggle('hidden', stepNumber !== 1);
-        document.getElementById('signupStep2').classList.toggle('hidden', stepNumber !== 2);
-        document.getElementById('dot1').classList.toggle('active', stepNumber === 1);
-        document.getElementById('dot2').classList.toggle('active', stepNumber === 2);
-        if (stepNumber === 2) { document.getElementById('signupOTP').focus(); }
-    }
-
-    function backToStep1(e) {
-        e.preventDefault();
-        showStep(1);
-        document.getElementById('signupStep1Form').reset();
-        showMessage('messageStep1', '', '');
-    }
-
     async function handleSignupStep1(e) {
         e.preventDefault();
         const btn = document.getElementById('step1Btn');
-        btn.disabled = true; btn.textContent = 'Sending…';
+        btn.disabled = true; btn.textContent = 'Creating account…';
         const username = document.getElementById('signupUsername').value.trim().toLowerCase();
         const email = document.getElementById('signupEmail').value.trim().toLowerCase();
         const password = document.getElementById('signupPassword').value;
@@ -250,12 +220,11 @@ h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;t
             });
             const data = await res.json();
             if (res.ok) {
-                currentEmail = email;
-                showMessage('messageStep1', 'OTP sent! Check your email.', 'success');
-                setTimeout(() => showStep(2), 1500);
+                showMessage('messageStep1', 'Account created! Redirecting to login…', 'success');
+                setTimeout(() => { window.location.href = '/api/auth/login'; }, 1500);
             } else {
-                showMessage('messageStep1', data.message || 'Error sending OTP', 'error');
-                btn.disabled = false; btn.textContent = 'Send OTP';
+                showMessage('messageStep1', data.message || 'Error creating account', 'error');
+                btn.disabled = false; btn.textContent = 'Create Account';
             }
         } catch (err) {
             showMessage('messageStep1', 'Network error: ' + err.message, 'error');
@@ -266,29 +235,8 @@ h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;t
     async function handleSignupStep2(e) {
         e.preventDefault();
         const btn = document.getElementById('step2Btn');
-        btn.disabled = true; btn.textContent = 'Verifying…';
-        const otp = document.getElementById('signupOTP').value;
-        try {
-            const res = await fetch('/api/auth/verify-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: currentEmail, otp })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showMessage('messageStep2', 'Account created successfully! Redirecting…', 'success');
-                setTimeout(() => { window.location.href = '/api/auth/login'; }, 2000);
-            } else {
-                showMessage('messageStep2', data.message || 'OTP verification failed', 'error');
-                btn.disabled = false; btn.textContent = 'Verify & Create Account';
-            }
-        } catch (err) {
-            showMessage('messageStep2', 'Network error: ' + err.message, 'error');
-            btn.disabled = false; btn.textContent = 'Verify & Create Account';
-        }
+        // handled in handleSignupStep1
     }
-
-    showStep(1);
 </script>
 </body>
 </html>`;
@@ -580,93 +528,39 @@ function verify_email(email) {
     return emailRegex.test(email);
 }
 
-// Step 1: Send OTP and store signup data
+// Signup — direct account creation, no OTP
 router.post('/signup-request', async (req, res, next) => {
-    console.log('[SIGNUP] Request received', req.body?.email);
     const ip = req.ip || req.connection.remoteAddress;
-    console.log('[SIGNUP] Checking rate limit for', ip);
-    if (await checkRateLimit(`signup:${ip}`, 3, 60)) {
+    if (await checkRateLimit(`signup:${ip}`, 5, 60)) {
         return res.status(429).json({ message: 'Too many signup attempts. Try again in 1 minute.' });
     }
-    console.log('[SIGNUP] Rate limit passed');
 
     let { username, email, password, confirm_password } = req.body;
-    
-    // Validate and normalize inputs
     username = username.trim().toLowerCase();
     email = email.trim().toLowerCase();
-    
-    if (!verify_email(email)) {
-        return res.status(400).json({ message: 'Invalid email format' });
-    }
-    
-    if (password !== confirm_password) {
-        return res.status(400).json({ message: 'Passwords do not match' });
-    }
-    
-    if (password.length < 6) {
-        return res.status(400).json({ message: 'Password must be at least 6 characters' });
-    }
-    
-    try {
-        console.log('[SIGNUP] Querying DB for existing user');
-        const querytext = 'SELECT * FROM users WHERE username = $1 OR email = $2';
-        const result = await pool.query(querytext, [username, email]);
-        console.log('[SIGNUP] DB query done, rows:', result.rows.length);
-        
-        if (result.rows.length > 0) {
-            return res.status(400).json({ message: 'Username or email already exists' });
-        }
-        
-        // Hash password and store signup data temporarily
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await storeSignupData(email, { username, email, hashedPassword });
 
-        // Send OTP
-        const otpResult = await send_and_generate_OTP(email);
-        
-        if (otpResult.success) {
-            return res.status(200).json({ message: 'OTP sent successfully' });
-        } else {
-            return res.status(500).json({ message: 'Failed to send OTP' });
-        }
+    if (!verify_email(email)) return res.status(400).json({ message: 'Invalid email format' });
+    if (password !== confirm_password) return res.status(400).json({ message: 'Passwords do not match' });
+    if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+
+    try {
+        const existing = await pool.query('SELECT id FROM users WHERE username = $1 OR email = $2', [username, email]);
+        if (existing.rows.length > 0) return res.status(400).json({ message: 'Username or email already exists' });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newuser = await pool.query(
+            'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
+            [username, email, hashedPassword]
+        );
+        return res.status(201).json({ message: 'Account created successfully', user: newuser.rows[0] });
     } catch (error) {
         next(error);
     }
 });
 
-// Step 2: Verify OTP and create account
-router.post('/verify-otp', async (req, res, next) => {
-    const { email, otp } = req.body;
-    
-    // Verify OTP
-    const otpVerification = await verifyOTP(email, otp);
-
-    if (!otpVerification.success) {
-        return res.status(400).json({ message: otpVerification.message });
-    }
-
-    // Get stored signup data
-    const signupData = await getSignupData(email);
-    
-    if (!signupData) {
-        return res.status(400).json({ message: 'Signup session expired. Please sign up again.' });
-    }
-    
-    try {
-        // Create user in database
-        const insertQuery = 'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, created_at';
-        const values = [signupData.username, signupData.email, signupData.hashedPassword];
-        
-        const newuser = await pool.query(insertQuery, values);
-        
-        return res.status(201).json({
-            message: 'Account created successfully',
-            user: newuser.rows[0]
-        });
-    } catch (error) {
-        next(error);
-    }
+// Keep verify-otp route alive to avoid breaking anything, just return success
+router.post('/verify-otp', (req, res) => {
+    res.status(200).json({ message: 'Account created successfully' });
 });
 
 router.post('/login/forgot-password', async (req, res, next) => {
