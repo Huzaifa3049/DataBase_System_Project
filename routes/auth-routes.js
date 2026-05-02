@@ -609,9 +609,10 @@ router.post('/signup-request', async (req, res, next) => {
     }
     
     try {
-        // Check if user already exists
+        console.log('[SIGNUP] Querying DB for existing user');
         const querytext = 'SELECT * FROM users WHERE username = $1 OR email = $2';
         const result = await pool.query(querytext, [username, email]);
+        console.log('[SIGNUP] DB query done, rows:', result.rows.length);
         
         if (result.rows.length > 0) {
             return res.status(400).json({ message: 'Username or email already exists' });
