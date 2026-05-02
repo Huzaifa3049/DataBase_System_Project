@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 8080;
 
 // Middleware - must come BEFORE routes
 app.use((req, res, next) => { console.log(`[REQ] ${req.method} ${req.path}`); next(); });
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
