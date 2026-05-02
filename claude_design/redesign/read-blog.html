@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>On finishing things — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#0e0c0b;--surface:#1a1714;--surface-2:#221d19;
+    --border:#2e2a27;--border-bright:#3d3630;
+    --text:#d4cdc7;--text-strong:#ece5df;--muted:#7a736d;--subtle:#5a534d;
+    --accent:#e8845c;--accent-soft:rgba(232,132,92,.10);--accent-press:#d97249;
+    --gold:#c9a96e;--gold-soft:rgba(201,169,110,.12);
+    --danger:#e05c5c;--success:#7fb069;
+    --r-sm:6px;--r:8px;--r-md:12px;--r-pill:999px;
+    --ease:cubic-bezier(.4,0,.2,1);--dur:200ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;min-height:100vh}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+::selection{background:var(--accent-soft);color:var(--text-strong)}
+
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;background:rgba(14,12,11,.92);backdrop-filter:saturate(150%) blur(12px);border-bottom:1px solid var(--border)}
+.brand{display:inline-flex;align-items:center;gap:.55rem;font-weight:700;font-size:1.05rem;color:var(--text-strong)}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px rgba(232,132,92,.5)}
+.nav-back{display:inline-flex;align-items:center;gap:.4rem;font-size:.86rem;color:var(--muted);padding:.5rem .85rem;border-radius:var(--r);transition:all var(--dur) var(--ease)}
+.nav-back:hover{color:var(--text-strong);background:var(--surface)}
+.read-progress{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:transparent}
+.read-progress-bar{height:100%;background:var(--accent);width:0;transition:width 80ms linear}
+.avatar-sm{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--gold));display:grid;place-items:center;color:#1a0f08;font-weight:700;font-size:.82rem}
+
+article{max-width:680px;margin:0 auto;padding:4rem 1.5rem 8rem}
+.tag{display:inline-block;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:1rem}
+h1{font-size:clamp(2rem,4.5vw,3rem);font-weight:700;color:var(--text-strong);letter-spacing:-.025em;line-height:1.15;margin-bottom:1rem;text-wrap:balance}
+.dek{font-size:1.1rem;color:var(--muted);line-height:1.6;margin-bottom:2rem;text-wrap:balance}
+
+.byline{display:flex;align-items:center;gap:.85rem;padding:1rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:2.5rem}
+.byline-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#a8856c,#e8845c);display:grid;place-items:center;color:#1a0f08;font-weight:700;font-size:1rem;flex-shrink:0}
+.byline-body{flex:1}
+.byline-name{font-size:.95rem;font-weight:600;color:var(--text-strong)}
+.byline-name a:hover{color:var(--accent)}
+.byline-meta{font-size:.78rem;color:var(--muted);margin-top:.15rem}
+.byline-meta span{margin:0 .35rem;color:var(--subtle)}
+.follow-pill{padding:.45rem 1rem;font-size:.78rem;font-weight:600;background:var(--accent);color:#1a0f08;border-radius:var(--r);transition:all var(--dur) var(--ease)}
+.follow-pill:hover{background:var(--accent-press)}
+.follow-pill.following{background:transparent;color:var(--muted);border:1px solid var(--border);padding:calc(.45rem - 1px) calc(1rem - 1px)}
+.follow-pill.following:hover{color:var(--danger);border-color:var(--danger);background:rgba(224,92,92,.08)}
+
+.body{font-size:1.125rem;line-height:1.85;color:var(--text)}
+.body p{margin-bottom:1.5rem}
+.body h2{font-size:1.45rem;font-weight:700;color:var(--text-strong);letter-spacing:-.015em;margin:2.5rem 0 1rem}
+.body blockquote{margin:2rem 0;padding-left:1.5rem;border-left:2px solid var(--accent);color:var(--text-strong);font-size:1.18rem;line-height:1.7;font-style:italic}
+.body code{font-family:ui-monospace,'SF Mono',monospace;font-size:.92rem;background:var(--surface);padding:.15rem .4rem;border-radius:4px;color:var(--gold)}
+.body a{color:var(--accent);border-bottom:1px solid rgba(232,132,92,.4);transition:border-color var(--dur) var(--ease)}
+.body a:hover{border-color:var(--accent)}
+.body img,.figure{width:100%;border-radius:var(--r-md);margin:2rem 0;border:1px solid var(--border)}
+.figure{aspect-ratio:16/9;background:linear-gradient(135deg,var(--surface),var(--surface-2));display:grid;place-items:center;color:var(--subtle);font-family:ui-monospace,monospace;font-size:.82rem;letter-spacing:.05em}
+
+/* Author card at bottom */
+.author-card{margin-top:4rem;padding:2rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);display:grid;grid-template-columns:auto 1fr auto;gap:1.5rem;align-items:center}
+.author-card-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#a8856c,#e8845c);display:grid;place-items:center;color:#1a0f08;font-weight:700;font-size:1.4rem}
+.author-card .label{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:.3rem}
+.author-card h3{font-size:1.15rem;font-weight:600;color:var(--text-strong);margin-bottom:.3rem}
+.author-card p{font-size:.88rem;color:var(--muted);line-height:1.55}
+.author-card-stats{font-size:.78rem;color:var(--subtle);margin-top:.5rem}
+
+/* Sticky action bar */
+.action-bar{position:fixed;left:50%;bottom:1.5rem;transform:translateX(-50%);display:flex;align-items:center;gap:.3rem;padding:.5rem;background:rgba(26,23,20,.95);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--r-pill);z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.act{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .95rem;font-size:.85rem;color:var(--text);border-radius:var(--r-pill);transition:all var(--dur) var(--ease)}
+.act:hover{background:var(--surface)}
+.act.active.like{color:var(--danger)}
+.act.active.like svg{fill:var(--danger);transform:scale(1.1)}
+.act.active.save{color:var(--gold)}
+.act.active.save svg{fill:var(--gold)}
+.act svg{transition:all var(--dur) var(--ease)}
+.act .count{font-variant-numeric:tabular-nums;font-size:.82rem}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1.1)}}
+.act.bouncing svg{animation:pop 350ms var(--ease)}
+
+/* Comments */
+.comments{margin-top:4rem}
+.comments-head{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:1.25rem}
+.comment-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);padding:1rem;font-family:inherit;font-size:.95rem;resize:vertical;min-height:80px;transition:border-color var(--dur) var(--ease)}
+.comment-input:focus{outline:none;border-color:var(--accent)}
+.comment-submit{margin-top:.6rem;padding:.55rem 1.2rem;font-size:.82rem;font-weight:600;background:var(--accent);color:#1a0f08;border-radius:var(--r);transition:background var(--dur) var(--ease)}
+.comment-submit:hover{background:var(--accent-press)}
+.comment-list{margin-top:2rem;display:flex;flex-direction:column;gap:1.5rem}
+.comment{display:flex;gap:.85rem}
+.comment-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7fb069,#c9a96e);display:grid;place-items:center;color:#1a0f08;font-weight:700;font-size:.82rem;flex-shrink:0}
+.comment-body{flex:1}
+.comment-head{font-size:.84rem;color:var(--text-strong);font-weight:600;margin-bottom:.2rem}
+.comment-head .when{font-size:.74rem;color:var(--subtle);font-weight:400;margin-left:.5rem}
+.comment-text{font-size:.92rem;color:var(--text);line-height:1.6}
+
+@media(max-width:760px){.nav{padding:.85rem 1.25rem}article{padding:2.5rem 1.25rem 7rem}.author-card{grid-template-columns:auto 1fr;gap:1rem}.author-card .follow-pill{grid-column:1/-1;justify-self:start}}
+</style>
+</head>
+<body>
+<nav class="nav">
+    <a class="nav-back" href="feed.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Back</a>
+    <a class="brand" href="dashboard.html"><span class="brand-dot"></span> Lumen</a>
+    <a class="avatar-sm" href="profile.html">M</a>
+    <div class="read-progress"><div class="read-progress-bar" id="progressBar"></div></div>
+</nav>
+
+<article>
+    <span class="tag">Essays</span>
+    <h1>On finishing things</h1>
+    <p class="dek">A short essay about the most expensive word in the English language: <em>later</em>.</p>
+
+    <div class="byline">
+        <a href="author.html" class="byline-avatar">T</a>
+        <div class="byline-body">
+            <div class="byline-name"><a href="author.html">Theo Vance</a></div>
+            <div class="byline-meta">Apr 22, 2026 <span>·</span> 8 min read <span>·</span> 4,201 followers</div>
+        </div>
+        <button class="follow-pill" id="followBtn" onclick="toggleFollow()">Follow</button>
+    </div>
+
+    <div class="body">
+        <p>I have eleven half-built projects in a folder called <code>later</code>. A reading app I started in 2022. Three essays I outlined and then abandoned. A garden plan. A novel that has the same first chapter four different ways.</p>
+        <p>Each of them was, at the moment of beginning, the most exciting thing I'd ever made. And each of them, at some point, became less interesting than the next idea — and so I shelved it, with the quiet promise that I'd come back.</p>
+
+        <h2>The cost of <em>later</em></h2>
+
+        <p>Here is what I've learned about that promise. <em>Later</em> is not a delay. It's a discount. Every time I move something into the <code>later</code> folder, I am quietly telling myself that it doesn't have to be good — because someday, when I have more time and skill and clarity, I'll come back and finish it properly.</p>
+
+        <blockquote>The work is never finished by a future, more competent version of you. It is finished by you, today, in your current state of partial knowledge and fading interest.</blockquote>
+
+        <p>This year, I made a rule. I'm allowed to start something only if I'm willing to finish the worst version of it. Not the best version. The worst. The version that exists at the end of an afternoon, badly, but completely.</p>
+
+        <div class="figure">[ illustration: photograph of a desk at dusk ]</div>
+
+        <p>It turns out that finishing the worst version of a thing is its own skill. It's a different muscle than the one that gets you started. It requires you to ignore the part of your brain that whispers <em>but it's not good yet</em>, and to ship it anyway. To call it done. To close the file.</p>
+        <p>The eleven half-projects are still in my <code>later</code> folder. I'm not going to finish them. That's the trade. To finish things, you have to be willing to never finish other things — and that, more than anything, is the part nobody tells you.</p>
+    </div>
+
+    <!-- Author card -->
+    <a class="author-card" href="author.html">
+        <div class="author-card-avatar">T</div>
+        <div>
+            <div class="label">Written by</div>
+            <h3>Theo Vance</h3>
+            <p>Writer of essays about attention, craft, and the boring middles of things.</p>
+            <div class="author-card-stats">24 stories · 4,201 followers</div>
+        </div>
+        <button class="follow-pill" onclick="event.preventDefault();toggleFollow()" id="followBtn2">Follow</button>
+    </a>
+
+    <!-- Comments -->
+    <div class="comments">
+        <div class="comments-head">142 responses</div>
+        <textarea class="comment-input" placeholder="What did this story make you think?"></textarea>
+        <button class="comment-submit">Post response</button>
+
+        <div class="comment-list">
+            <div class="comment">
+                <div class="comment-avatar">I</div>
+                <div class="comment-body">
+                    <div class="comment-head">Iris Chen <span class="when">2h ago</span></div>
+                    <div class="comment-text">"The version that exists at the end of an afternoon, badly, but completely." I'm pinning this above my monitor.</div>
+                </div>
+            </div>
+            <div class="comment">
+                <div class="comment-avatar" style="background:linear-gradient(135deg,#d97249,#a8856c)">D</div>
+                <div class="comment-body">
+                    <div class="comment-head">Daniel Okafor <span class="when">5h ago</span></div>
+                    <div class="comment-text">Reading this in the middle of refactoring something I should have shipped two weeks ago. Ouch. Thank you.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</article>
+
+<!-- Sticky action bar -->
+<div class="action-bar">
+    <button class="act like" id="likeBtn" onclick="toggleLike()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
+        <span class="count" id="likeCount">891</span>
+    </button>
+    <button class="act save" id="saveBtn" onclick="toggleSave()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+        <span>Save</span>
+    </button>
+    <button class="act"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="count">142</span></button>
+    <button class="act"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+</div>
+
+<script>
+function toggleLike(){
+    const b=document.getElementById('likeBtn'), c=document.getElementById('likeCount');
+    const liked=b.classList.toggle('active');
+    c.textContent = parseInt(c.textContent.replace(',','')) + (liked?1:-1);
+    b.classList.add('bouncing');
+    setTimeout(()=>b.classList.remove('bouncing'),350);
+}
+function toggleSave(){
+    const b=document.getElementById('saveBtn');
+    b.classList.toggle('active');
+    b.classList.add('bouncing');
+    setTimeout(()=>b.classList.remove('bouncing'),350);
+}
+function toggleFollow(){
+    const buttons=[document.getElementById('followBtn'),document.getElementById('followBtn2')];
+    const wasFollowing=buttons[0].classList.contains('following');
+    buttons.forEach(b=>{
+        b.classList.toggle('following',!wasFollowing);
+        b.textContent = !wasFollowing ? 'Following' : 'Follow';
+    });
+}
+[document.getElementById('followBtn'),document.getElementById('followBtn2')].forEach(b=>{
+    b.addEventListener('mouseenter',()=>{ if(b.classList.contains('following')) b.textContent='Unfollow'; });
+    b.addEventListener('mouseleave',()=>{ if(b.classList.contains('following')) b.textContent='Following'; });
+});
+window.addEventListener('scroll',()=>{
+    const h=document.documentElement, scrolled=h.scrollTop/(h.scrollHeight-h.clientHeight);
+    document.getElementById('progressBar').style.width=Math.min(100,scrolled*100)+'%';
+});
+</script>
+</body>
+</html>

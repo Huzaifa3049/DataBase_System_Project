@@ -1,698 +1,514 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f0f2f5;
-            color: #333;
-            min-height: 100vh;
-        }
-        .topbar {
-            background: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .topbar h1 { font-size: 1.3rem; color: #2d3748; }
-        .topbar a { color: #4a90e2; text-decoration: none; font-weight: 500; }
-        .topbar a:hover { text-decoration: underline; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#0e0c0b; --surface:#1a1714; --surface-2:#221d19;
+    --border:#2e2a27; --border-bright:#3d3630;
+    --text:#d4cdc7; --text-strong:#ece5df; --muted:#7a736d; --subtle:#5a534d;
+    --accent:#e8845c; --accent-soft:rgba(232,132,92,.10); --accent-press:#d97249;
+    --gold:#c9a96e;
+    --danger:#e05c5c; --success:#7fb069;
+    --shadow-md:0 8px 24px rgba(0,0,0,.35);
+    --r-sm:6px; --r:8px; --r-md:12px; --r-pill:999px;
+    --ease:cubic-bezier(.4,0,.2,1); --dur:200ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text-strong);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh}
+a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
 
-        .main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+/* Nav */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(14,12,11,.92);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--border)}
+.nav-brand{display:flex;align-items:center;gap:.65rem;font-weight:700;font-size:1.05rem}
+.nav-brand-mark{width:28px;height:28px;border-radius:var(--r);background:var(--accent);display:grid;place-items:center;font-weight:800;font-size:.9rem;color:#fff}
+.nav-links{display:flex;gap:.4rem}
+.nav-link{padding:.5rem .95rem;font-size:.875rem;font-weight:500;color:var(--muted);border-radius:var(--r-pill);transition:all var(--dur) var(--ease)}
+.nav-link:hover,.nav-link.active{color:var(--text-strong);background:var(--surface-2)}
+.nav-right{display:flex;align-items:center;gap:.75rem;position:relative}
+.nav-icon-btn{width:38px;height:38px;display:grid;place-items:center;border-radius:var(--r-pill);color:var(--muted);transition:all var(--dur) var(--ease);position:relative}
+.nav-icon-btn:hover{background:var(--surface-2);color:var(--text-strong)}
+.nav-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--accent);display:none}
+.nav-badge.show{display:block}
 
-        /* Profile card */
-        .profile-card {
-            background: white;
-            border-radius: 10px;
-            padding: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 1.5rem;
-        }
-        .profile-card h2 { margin-bottom: 1.5rem; font-size: 1.2rem; color: #2d3748; }
+/* Hero */
+.hero{max-width:1180px;margin:0 auto;padding:4rem 2.5rem 2rem;text-align:center}
+.avatar-xl{width:120px;height:120px;border-radius:50%;background:var(--accent);display:grid;place-items:center;margin:0 auto 1.25rem;font-size:3rem;font-weight:700;color:#fff;cursor:pointer;border:3px solid var(--bg);outline:1px solid var(--border-bright);position:relative;overflow:hidden}
+.avatar-xl img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.avatar-xl .edit-hint{position:absolute;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;opacity:0;transition:opacity var(--dur) var(--ease);z-index:1}
+.avatar-xl:hover .edit-hint{opacity:1}
+.username{font-size:2.4rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.4rem}
+.handle{color:var(--muted);font-size:.95rem;margin-bottom:.4rem}
 
-        .avatar-wrap {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .avatar {
-            width: 80px; height: 80px; border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #e2e8f0;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .avatar:hover { opacity: 0.75; }
-        .avatar-initials {
-            width: 80px; height: 80px; border-radius: 50%;
-            background: linear-gradient(135deg, #4a90e2, #764ba2);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; font-weight: 700; color: white;
-            cursor: pointer; flex-shrink: 0;
-            transition: opacity 0.2s;
-        }
-        .avatar-initials:hover { opacity: 0.75; }
-        .avatar-hint { font-size: 0.75rem; color: #999; margin-top: 0.3rem; }
+.stats-row{display:flex;justify-content:center;gap:3rem;margin-bottom:2rem;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;align-items:center;gap:.25rem}
+.stat .num{font-size:1.6rem;font-weight:700;letter-spacing:-.015em;font-variant-numeric:tabular-nums}
+.stat .lbl{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 
-        .profile-info {
-            display: grid;
-            grid-template-columns: 120px 1fr;
-            gap: 0.75rem 1rem;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        .profile-info .label { font-weight: 600; color: #666; font-size: 0.9rem; }
-        .profile-info .value { color: #333; font-size: 0.95rem; }
+.hero-actions{display:flex;justify-content:center;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.btn-ghost{padding:.55rem 1.2rem;font-size:.85rem;font-weight:500;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-pill);transition:all var(--dur) var(--ease)}
+.btn-ghost:hover{color:var(--text-strong);border-color:var(--border-bright)}
+.btn-primary{padding:.55rem 1.4rem;font-size:.85rem;font-weight:600;border-radius:var(--r-pill);background:var(--accent);color:#fff;transition:all var(--dur) var(--ease)}
+.btn-primary:hover{transform:translateY(-1px);background:var(--accent-press)}
+.btn-danger{padding:.55rem 1.2rem;font-size:.85rem;font-weight:500;border-radius:var(--r-pill);background:transparent;border:1px solid rgba(224,92,92,.3);color:var(--danger);transition:all var(--dur) var(--ease)}
+.btn-danger:hover{background:rgba(224,92,92,.1)}
 
-        .btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-        .btn {
-            padding: 0.5rem 1.2rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .btn-primary { background: #4a90e2; color: white; }
-        .btn-primary:hover { background: #357abd; }
-        .btn-secondary { background: #edf2f7; color: #4a5568; }
-        .btn-secondary:hover { background: #e2e8f0; }
-        .btn-danger { background: #e53e3e; color: white; }
-        .btn-danger:hover { background: #c53030; }
+/* Inline edit sections */
+.edit-section{display:none;max-width:480px;margin:.75rem auto 0;padding:1.5rem;background:var(--surface-2);border:1px solid var(--border-bright);border-radius:var(--r-md)}
+.edit-section.active{display:block}
+.edit-section h3{font-size:1rem;font-weight:600;margin-bottom:1rem}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.78rem;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.form-group input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text-strong);padding:.75rem 1rem;border-radius:var(--r-md);font-size:.9rem;transition:border-color var(--dur) var(--ease)}
+.form-group input:focus{outline:none;border-color:rgba(232,132,92,.5);box-shadow:0 0 0 3px rgba(232,132,92,.1)}
+.form-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:1rem}
+.form-message{margin-top:.75rem;padding:.6rem .85rem;border-radius:var(--r-sm);font-size:.82rem;display:none}
+.form-message.success{display:block;background:rgba(127,176,105,.12);border:1px solid rgba(127,176,105,.3);color:var(--success)}
+.form-message.error{display:block;background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.25);color:var(--danger)}
 
-        /* Edit forms */
-        .edit-section {
-            display: none;
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #eee;
-        }
-        .edit-section.active { display: block; }
-        .edit-section h3 { margin-bottom: 1rem; font-size: 1rem; color: #2d3748; }
+/* Tabs */
+.tabs-wrap{max-width:1180px;margin:0 auto;padding:0 2.5rem;border-bottom:1px solid var(--border);display:flex;gap:.4rem}
+.tab{padding:1rem 1.4rem;font-size:.9rem;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;transition:all var(--dur) var(--ease);position:relative;top:1px;background:none;border-left:none;border-right:none;border-top:none;cursor:pointer}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--text-strong);border-bottom-color:var(--accent)}
 
-        .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; margin-bottom: 0.3rem; font-size: 0.85rem; color: #666; font-weight: 500; }
-        .form-group input {
-            width: 100%;
-            padding: 0.6rem 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-family: inherit;
-        }
-        .form-group input:focus { outline: none; border-color: #4a90e2; }
+/* Tab panels */
+.panel-wrap{max-width:1180px;margin:0 auto;padding:2.5rem 2.5rem 6rem}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
 
-        .form-message {
-            margin-top: 0.75rem;
-            padding: 0.6rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            display: none;
-        }
-        .form-message.success { display: block; background: #d4edda; color: #155724; }
-        .form-message.error { display: block; background: #f8d7da; color: #721c24; }
+/* Blog entries */
+.entry{display:grid;grid-template-columns:1fr auto;gap:1.5rem;padding:1.5rem 0;border-bottom:1px solid var(--border);transition:padding var(--dur) var(--ease);align-items:center}
+.entry:hover{padding-left:.5rem}
+.entry-body{min-width:0}
+.entry h4{font-size:1.1rem;font-weight:600;letter-spacing:-.015em;margin-bottom:.4rem;cursor:pointer;color:var(--text-strong)}
+.entry h4:hover{color:var(--accent)}
+.entry p{color:var(--muted);font-size:.9rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.65rem}
+.entry-meta{display:flex;align-items:center;gap:1rem;font-size:.78rem;color:var(--subtle)}
+.entry-actions{display:flex;gap:.4rem;flex-shrink:0}
+.b-edit{padding:.4rem .85rem;font-size:.78rem;font-weight:500;border-radius:var(--r-pill);background:var(--surface-2);border:1px solid var(--border);color:var(--text);text-decoration:none;transition:all var(--dur) var(--ease)}
+.b-edit:hover{background:var(--border);color:var(--text-strong)}
+.b-del{padding:.4rem .85rem;font-size:.78rem;font-weight:500;border-radius:var(--r-pill);background:transparent;border:1px solid transparent;color:var(--subtle);transition:all var(--dur) var(--ease)}
+.b-del:hover{color:var(--danger);border-color:rgba(224,92,92,.3)}
 
-        /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 0;
-            margin-bottom: 0;
-            background: white;
-            border-radius: 10px 10px 0 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            overflow: hidden;
-        }
-        .tab {
-            flex: 1;
-            padding: 0.85rem 1rem;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.9rem;
-            color: #666;
-            background: #f9fafb;
-            border: none;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-        }
-        .tab:hover { background: #edf2f7; }
-        .tab.active {
-            color: #4a90e2;
-            background: white;
-            border-bottom-color: #4a90e2;
-        }
+.empty-state{text-align:center;padding:3rem 2rem;color:var(--muted);font-size:.92rem}
+.loading{text-align:center;padding:2rem;color:var(--muted)}
 
-        .tab-content {
-            background: white;
-            border-radius: 0 0 10px 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            padding: 1.5rem;
-            min-height: 200px;
-        }
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
+/* Notifications dropdown */
+.notif-pop{position:absolute;top:48px;right:0;width:380px;max-height:480px;overflow-y:auto;background:var(--surface-2);border:1px solid var(--border-bright);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.5);display:none;z-index:60}
+.notif-pop.open{display:block}
+.notif-head{padding:1rem 1.25rem;font-size:.95rem;font-weight:600;border-bottom:1px solid var(--border)}
+.notif-item{display:flex;gap:.75rem;padding:.85rem 1.25rem;border-bottom:1px solid var(--border);transition:background var(--dur) var(--ease);cursor:pointer;text-decoration:none;color:inherit}
+.notif-item:hover{background:var(--surface)}
+.notif-item.unread{background:rgba(232,132,92,.06)}
+.notif-ico{width:36px;height:36px;border-radius:50%;background:var(--border-bright);display:grid;place-items:center;flex-shrink:0;font-size:1.1rem}
+.notif-body{flex:1;min-width:0}
+.notif-text{font-size:.88rem;line-height:1.45;color:var(--text)}
+.notif-text strong{color:var(--text-strong);font-weight:600}
+.notif-when{font-size:.74rem;color:var(--subtle);margin-top:.2rem}
+.notif-empty{padding:2rem 1rem;text-align:center;color:var(--muted);font-size:.88rem}
 
-        /* Blog cards in tabs */
-        .blog-card {
-            border: 1px solid #eee;
-            border-radius: 8px;
-            padding: 1rem 1.2rem;
-            margin-bottom: 0.75rem;
-            transition: box-shadow 0.2s;
-        }
-        .blog-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .blog-card h4 { margin-bottom: 0.4rem; color: #2d3748; font-size: 1rem; }
-        .blog-card p { color: #666; font-size: 0.85rem; line-height: 1.5; }
-        .blog-card .meta {
-            margin-top: 0.5rem;
-            font-size: 0.78rem;
-            color: #999;
-            display: flex;
-            gap: 1rem;
-        }
-        .blog-card .author { color: #4a90e2; }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: #999;
-            font-size: 0.95rem;
-        }
-
-        .loading { text-align: center; padding: 2rem; color: #999; }
-
-        /* ── Notifications ── */
-        .notif-wrapper {
-            position: relative;
-        }
-        .notif-bell {
-            background: none; border: none; cursor: pointer;
-            font-size: 1.5rem; position: relative;
-            padding: 0.3rem 0.5rem; border-radius: 8px;
-            transition: background 0.2s;
-        }
-        .notif-bell:hover { background: #edf2f7; }
-        .notif-badge {
-            position: absolute; top: -2px; right: -2px;
-            background: #e53e3e; color: white;
-            font-size: 0.65rem; font-weight: 700;
-            width: 18px; height: 18px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .notif-badge.hidden { display: none; }
-        .notif-dropdown {
-            display: none;
-            position: absolute; top: 100%; right: 0;
-            width: 350px; max-height: 400px; overflow-y: auto;
-            background: white; border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            z-index: 200; margin-top: 0.5rem;
-        }
-        .notif-dropdown.open { display: block; }
-        .notif-dropdown-header {
-            padding: 0.8rem 1rem;
-            font-weight: 600; font-size: 0.95rem; color: #2d3748;
-            border-bottom: 1px solid #eee;
-        }
-        .notif-item {
-            display: flex; align-items: flex-start; gap: 0.7rem;
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #f5f5f5;
-            cursor: pointer; transition: background 0.15s;
-            text-decoration: none; color: inherit;
-        }
-        .notif-item:hover { background: #f7fafc; }
-        .notif-item.unread { background: #ebf5ff; }
-        .notif-item.unread:hover { background: #dbeafe; }
-        .notif-icon {
-            font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;
-        }
-        .notif-body { flex: 1; }
-        .notif-text { font-size: 0.85rem; color: #333; line-height: 1.4; }
-        .notif-text strong { font-weight: 600; }
-        .notif-time { font-size: 0.72rem; color: #999; margin-top: 2px; }
-        .notif-empty {
-            padding: 2rem 1rem; text-align: center;
-            color: #999; font-size: 0.9rem;
-        }
-    </style>
+@media(max-width:760px){.nav-links{display:none}.tabs-wrap{padding:0 1.25rem;overflow-x:auto}.panel-wrap,.hero{padding-left:1.25rem;padding-right:1.25rem}.entry{grid-template-columns:1fr}.entry-actions{justify-content:flex-start}}
+</style>
 </head>
 <body>
-    <div class="topbar">
-        <h1>My Profile</h1>
-        <div style="display:flex; align-items:center; gap:1rem;">
-            <div class="notif-wrapper">
-                <button class="notif-bell" id="bellBtn" onclick="toggleNotifDropdown()">
-                    🔔
-                    <span class="notif-badge hidden" id="notifBadge">0</span>
-                </button>
-                <div class="notif-dropdown" id="notifDropdown">
-                    <div class="notif-dropdown-header">Notifications</div>
-                    <div id="notifList">
-                        <div class="notif-empty">No notifications yet</div>
-                    </div>
-                </div>
-            </div>
-            <a href="/api/dashboard">Back to Dashboard</a>
+<nav class="nav">
+    <a href="/api/dashboard" class="nav-brand"><div class="nav-brand-mark">L</div><span>Lumen</span></a>
+    <div class="nav-links">
+        <a class="nav-link" href="/api/dashboard">Home</a>
+        <a class="nav-link" href="/api/blogs/feed-ui">Feed</a>
+        <a class="nav-link" href="/api/blogs/create-ui">Write</a>
+    </div>
+    <div class="nav-right">
+        <button class="nav-icon-btn" onclick="toggleNotifDropdown()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span class="nav-badge" id="notifBadge"></span>
+        </button>
+        <div class="notif-pop" id="notifDropdown">
+            <div class="notif-head">Notifications</div>
+            <div id="notifList"><div class="notif-empty">No notifications yet</div></div>
         </div>
     </div>
+</nav>
 
-    <div class="main">
-        <!-- Profile Details Card -->
-        <div class="profile-card">
-            <h2>Account Details</h2>
-
-            <div class="avatar-wrap">
-                <div id="avatarContainer">
-                    <div class="avatar-initials" id="avatarInitials" onclick="document.getElementById('avatarInput').click()"></div>
-                </div>
-                <div>
-                    <div style="font-weight:600;color:#2d3748;" id="avatarName">Loading...</div>
-                    <div class="avatar-hint">Click avatar to change photo</div>
-                </div>
-                <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
-            </div>
-
-            <div class="profile-info" id="profileInfo">
-                <span class="label">Username</span>
-                <span class="value" id="displayUsername">Loading...</span>
-                <span class="label">Email</span>
-                <span class="value" id="displayEmail">Loading...</span>
-                <span class="label">Member since</span>
-                <span class="value" id="displayCreatedAt">Loading...</span>
-            </div>
-            <div class="btn-row">
-                <button class="btn btn-primary" onclick="toggleSection('editProfile')">Edit Profile</button>
-                <button class="btn btn-secondary" onclick="toggleSection('changePassword')">Change Password</button>
-            </div>
-
-            <!-- Edit Profile Form -->
-            <div class="edit-section" id="editProfile">
-                <h3>Edit Profile</h3>
-                <form onsubmit="handleEditProfile(event)">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="editUsername" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="editEmail" required>
-                    </div>
-                    <div class="btn-row">
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                        <button type="button" class="btn btn-secondary" onclick="toggleSection('editProfile')">Cancel</button>
-                    </div>
-                    <div class="form-message" id="editMessage"></div>
-                </form>
-            </div>
-
-            <!-- Change Password Form -->
-            <div class="edit-section" id="changePassword">
-                <h3>Change Password</h3>
-                <form onsubmit="handleChangePassword(event)">
-                    <div class="form-group">
-                        <label>Current Password</label>
-                        <input type="password" id="currentPassword" required>
-                    </div>
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <input type="password" id="newPassword" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm New Password</label>
-                        <input type="password" id="confirmNewPassword" required>
-                    </div>
-                    <div class="btn-row">
-                        <button type="submit" class="btn btn-primary">Update Password</button>
-                        <button type="button" class="btn btn-secondary" onclick="toggleSection('changePassword')">Cancel</button>
-                    </div>
-                    <div class="form-message" id="passwordMessage"></div>
-                </form>
-            </div>
+<header class="hero">
+    <div class="avatar-xl" id="avatarContainer" onclick="document.getElementById('avatarInput').click()">
+        <span id="avatarInitials">?</span>
+        <div class="edit-hint">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-9A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20h11a2.5 2.5 0 0 0 2.5-2.5v-7"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.5 9.5 14 10l.5-3.5z"/></svg>
         </div>
+        <input type="file" accept="image/*" id="avatarInput" style="display:none" onchange="uploadAvatar(this)">
+    </div>
+    <h1 class="username" id="displayUsername">Loading…</h1>
+    <p class="handle" id="displayEmail">Loading…</p>
 
-        <!-- Tabs for blogs -->
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('published')">Published</button>
-            <button class="tab" onclick="switchTab('drafts')">Drafts</button>
-            <button class="tab" onclick="switchTab('liked')">Liked</button>
-            <button class="tab" onclick="switchTab('saved')">Saved</button>
-        </div>
-        <div class="tab-content">
-            <div class="tab-panel active" id="panel-published">
-                <div class="loading">Loading...</div>
-            </div>
-            <div class="tab-panel" id="panel-drafts">
-                <div class="loading">Loading...</div>
-            </div>
-            <div class="tab-panel" id="panel-liked">
-                <div class="loading">Loading...</div>
-            </div>
-            <div class="tab-panel" id="panel-saved">
-                <div class="loading">Loading...</div>
-            </div>
-        </div>
+    <div class="stats-row">
+        <div class="stat"><div class="num" id="statStories">—</div><div class="lbl">Stories</div></div>
+        <div class="stat"><div class="num" id="statFollowers">—</div><div class="lbl">Followers</div></div>
+        <div class="stat"><div class="num" id="statFollowing">—</div><div class="lbl">Following</div></div>
     </div>
 
-    <script>
-        // --- Load profile on page load ---
-        async function loadProfile() {
-            try {
-                const res = await fetch('/api/auth/profile');
-                const data = await res.json();
-                if (res.ok) {
-                    const user = data.user;
-                    document.getElementById('displayUsername').textContent = user.username;
-                    document.getElementById('displayEmail').textContent = user.email;
-                    document.getElementById('displayCreatedAt').textContent = new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                    document.getElementById('editUsername').value = user.username;
-                    document.getElementById('editEmail').value = user.email;
-                    document.getElementById('avatarName').textContent = user.username;
-                    renderAvatar(user.profile_picture, user.username);
-                } else {
-                    window.location.href = '/api/auth/login';
-                }
-            } catch (err) {
-                console.error('Error loading profile:', err);
-            }
-        }
+    <div class="hero-actions">
+        <button class="btn-ghost" onclick="toggleSection('editProfile')">Edit profile</button>
+        <button class="btn-ghost" onclick="toggleSection('changePassword')">Change password</button>
+        <a class="btn-ghost" href="/api/auth/logout">Sign out</a>
+    </div>
 
-        function renderAvatar(url, username) {
-            const container = document.getElementById('avatarContainer');
-            if (url) {
-                container.innerHTML = `<img class="avatar" src="${url}" alt="avatar" onclick="document.getElementById('avatarInput').click()">`;
+    <!-- Edit profile (inline) -->
+    <div class="edit-section" id="editProfile">
+        <h3>Edit profile</h3>
+        <form onsubmit="handleEditProfile(event)">
+            <div class="form-group"><label>Username</label><input type="text" id="editUsername" required></div>
+            <div class="form-group"><label>Email</label><input type="email" id="editEmail" required></div>
+            <div class="form-actions">
+                <button type="button" class="btn-ghost" onclick="toggleSection('editProfile')">Cancel</button>
+                <button type="submit" class="btn-primary">Save changes</button>
+            </div>
+            <div class="form-message" id="editMessage"></div>
+        </form>
+    </div>
+
+    <!-- Change password (inline) -->
+    <div class="edit-section" id="changePassword">
+        <h3>Change password</h3>
+        <form onsubmit="handleChangePassword(event)">
+            <div class="form-group"><label>Current password</label><input type="password" id="currentPassword" required></div>
+            <div class="form-group"><label>New password</label><input type="password" id="newPassword" required></div>
+            <div class="form-group"><label>Confirm new password</label><input type="password" id="confirmNewPassword" required></div>
+            <div class="form-actions">
+                <button type="button" class="btn-ghost" onclick="toggleSection('changePassword')">Cancel</button>
+                <button type="submit" class="btn-primary">Update password</button>
+            </div>
+            <div class="form-message" id="passwordMessage"></div>
+        </form>
+    </div>
+</header>
+
+<!-- Tabs -->
+<div class="tabs-wrap">
+    <button class="tab active" onclick="switchTab('published', this)">Published</button>
+    <button class="tab" onclick="switchTab('drafts', this)">Drafts</button>
+    <button class="tab" onclick="switchTab('liked', this)">Liked</button>
+    <button class="tab" onclick="switchTab('saved', this)">Saved</button>
+</div>
+
+<div class="panel-wrap">
+    <div class="tab-panel active" id="panel-published"><div class="loading">Loading…</div></div>
+    <div class="tab-panel" id="panel-drafts"><div class="loading">Loading…</div></div>
+    <div class="tab-panel" id="panel-liked"><div class="loading">Loading…</div></div>
+    <div class="tab-panel" id="panel-saved"><div class="loading">Loading…</div></div>
+</div>
+
+<script>
+    // --- Load profile ---
+    async function loadProfile() {
+        try {
+            const res = await fetch('/api/auth/profile');
+            const data = await res.json();
+            if (res.ok) {
+                const user = data.user;
+                document.getElementById('displayUsername').textContent = user.username;
+                document.getElementById('displayEmail').textContent = user.email + ' · Member since ' + new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+                document.getElementById('editUsername').value = user.username;
+                document.getElementById('editEmail').value = user.email;
+                renderAvatar(user.profile_picture, user.username);
             } else {
-                container.innerHTML = `<div class="avatar-initials" onclick="document.getElementById('avatarInput').click()">${username.charAt(0).toUpperCase()}</div>`;
+                window.location.href = '/api/auth/login';
             }
+        } catch (err) {
+            console.error('Error loading profile:', err);
         }
+    }
 
-        async function uploadAvatar(input) {
-            if (!input.files || !input.files[0]) return;
-            const formData = new FormData();
-            formData.append('avatar', input.files[0]);
-            try {
-                const res = await fetch('/api/auth/upload-avatar', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (res.ok) {
-                    renderAvatar(data.profile_picture, document.getElementById('avatarName').textContent);
-                } else {
-                    alert(data.error || 'Upload failed');
-                }
-            } catch (err) {
-                alert('Upload failed');
+    function renderAvatar(url, username) {
+        const container = document.getElementById('avatarContainer');
+        const initial = username ? username.charAt(0).toUpperCase() : '?';
+        if (url) {
+            // Keep the edit overlay and file input
+            container.innerHTML = `
+                <img src="${url}" alt="avatar" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+                <div class="edit-hint"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-9A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20h11a2.5 2.5 0 0 0 2.5-2.5v-7"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.5 9.5 14 10l.5-3.5z"/></svg></div>
+                <input type="file" accept="image/*" id="avatarInput" style="display:none" onchange="uploadAvatar(this)">`;
+        } else {
+            document.getElementById('avatarInitials').textContent = initial;
+        }
+    }
+
+    async function uploadAvatar(input) {
+        if (!input.files || !input.files[0]) return;
+        const formData = new FormData();
+        formData.append('avatar', input.files[0]);
+        try {
+            const res = await fetch('/api/auth/upload-avatar', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (res.ok) {
+                renderAvatar(data.profile_picture, document.getElementById('displayUsername').textContent);
+            } else {
+                alert(data.error || 'Upload failed');
             }
-            input.value = '';
+        } catch (err) {
+            alert('Upload failed');
         }
+        input.value = '';
+    }
 
-        // --- Toggle edit sections ---
-        function toggleSection(id) {
-            const section = document.getElementById(id);
-            section.classList.toggle('active');
-        }
+    function toggleSection(id) {
+        const section = document.getElementById(id);
+        section.classList.toggle('active');
+    }
 
-        // --- Edit profile ---
-        async function handleEditProfile(e) {
-            e.preventDefault();
-            const msgEl = document.getElementById('editMessage');
-            const username = document.getElementById('editUsername').value;
-            const email = document.getElementById('editEmail').value;
-
-            try {
-                const res = await fetch('/api/auth/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showFormMessage(msgEl, data.message, 'success');
-                    document.getElementById('displayUsername').textContent = data.user.username;
-                    document.getElementById('displayEmail').textContent = data.user.email;
-                } else {
-                    showFormMessage(msgEl, data.message, 'error');
-                }
-            } catch (err) {
-                showFormMessage(msgEl, 'Network error', 'error');
+    async function handleEditProfile(e) {
+        e.preventDefault();
+        const msgEl = document.getElementById('editMessage');
+        const username = document.getElementById('editUsername').value;
+        const email = document.getElementById('editEmail').value;
+        try {
+            const res = await fetch('/api/auth/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showFormMessage(msgEl, data.message, 'success');
+                document.getElementById('displayUsername').textContent = data.user.username;
+                document.getElementById('displayEmail').textContent = data.user.email;
+            } else {
+                showFormMessage(msgEl, data.message, 'error');
             }
+        } catch (err) {
+            showFormMessage(msgEl, 'Network error', 'error');
         }
+    }
 
-        // --- Change password ---
-        async function handleChangePassword(e) {
-            e.preventDefault();
-            const msgEl = document.getElementById('passwordMessage');
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmNewPassword').value;
-
-            try {
-                const res = await fetch('/api/auth/change-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showFormMessage(msgEl, data.message, 'success');
-                    document.getElementById('currentPassword').value = '';
-                    document.getElementById('newPassword').value = '';
-                    document.getElementById('confirmNewPassword').value = '';
-                } else {
-                    showFormMessage(msgEl, data.message, 'error');
-                }
-            } catch (err) {
-                showFormMessage(msgEl, 'Network error', 'error');
+    async function handleChangePassword(e) {
+        e.preventDefault();
+        const msgEl = document.getElementById('passwordMessage');
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmNewPassword').value;
+        try {
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showFormMessage(msgEl, data.message, 'success');
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
+            } else {
+                showFormMessage(msgEl, data.message, 'error');
             }
+        } catch (err) {
+            showFormMessage(msgEl, 'Network error', 'error');
         }
+    }
 
-        function showFormMessage(el, text, type) {
-            el.textContent = text;
-            el.className = 'form-message ' + type;
-        }
+    function showFormMessage(el, text, type) {
+        el.textContent = text;
+        el.className = 'form-message ' + type;
+    }
 
-        // --- Tabs ---
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('panel-' + tabName).classList.add('active');
-        }
+    // --- Tabs ---
+    function switchTab(tabName, btn) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + tabName).classList.add('active');
+    }
 
-        // --- Load blog lists ---
-        async function loadPublished() {
-            const panel = document.getElementById('panel-published');
-            try {
-                const res = await fetch('/api/blogs/my-published');
-                const data = await res.json();
-                if (res.ok && data.blogs.length > 0) {
-                    panel.innerHTML = data.blogs.map(b => blogCard(b, 'published')).join('');
-                } else {
-                    panel.innerHTML = '<div class="empty-state">No published blogs yet. <a href="/api/blogs/create-ui">Write one!</a></div>';
-                }
-            } catch (err) {
-                panel.innerHTML = '<div class="empty-state">Failed to load published blogs.</div>';
+    // --- Blog lists ---
+    async function loadPublished() {
+        const panel = document.getElementById('panel-published');
+        try {
+            const res = await fetch('/api/blogs/my-published');
+            const data = await res.json();
+            if (res.ok && data.blogs.length > 0) {
+                document.getElementById('statStories').textContent = data.blogs.length;
+                panel.innerHTML = data.blogs.map(b => blogEntry(b, 'published')).join('');
+            } else {
+                panel.innerHTML = '<div class="empty-state">No published blogs yet. <a href="/api/blogs/create-ui" style="color:var(--accent)">Write one →</a></div>';
             }
+        } catch (err) {
+            panel.innerHTML = '<div class="empty-state">Failed to load.</div>';
+        }
+    }
+
+    async function loadDrafts() {
+        const panel = document.getElementById('panel-drafts');
+        try {
+            const res = await fetch('/api/blogs/my-drafts');
+            const data = await res.json();
+            if (res.ok && data.drafts.length > 0) {
+                panel.innerHTML = data.drafts.map(d => blogEntry(d, 'draft')).join('');
+            } else {
+                panel.innerHTML = '<div class="empty-state">No drafts. <a href="/api/blogs/create-ui" style="color:var(--accent)">Start writing →</a></div>';
+            }
+        } catch (err) {
+            panel.innerHTML = '<div class="empty-state">Failed to load.</div>';
+        }
+    }
+
+    async function loadLiked() {
+        const panel = document.getElementById('panel-liked');
+        try {
+            const res = await fetch('/api/blogs/my-liked');
+            const data = await res.json();
+            if (res.ok && data.blogs.length > 0) {
+                panel.innerHTML = data.blogs.map(b => blogEntry(b, 'liked')).join('');
+            } else {
+                panel.innerHTML = '<div class="empty-state">No liked blogs yet. <a href="/api/blogs/feed-ui" style="color:var(--accent)">Explore the feed →</a></div>';
+            }
+        } catch (err) {
+            panel.innerHTML = '<div class="empty-state">Failed to load.</div>';
+        }
+    }
+
+    async function loadSaved() {
+        const panel = document.getElementById('panel-saved');
+        try {
+            const res = await fetch('/api/blogs/my-saved');
+            const data = await res.json();
+            if (res.ok && data.blogs.length > 0) {
+                panel.innerHTML = data.blogs.map(b => blogEntry(b, 'saved')).join('');
+            } else {
+                panel.innerHTML = '<div class="empty-state">No saved blogs yet. <a href="/api/blogs/feed-ui" style="color:var(--accent)">Browse the feed →</a></div>';
+            }
+        } catch (err) {
+            panel.innerHTML = '<div class="empty-state">Failed to load.</div>';
+        }
+    }
+
+    function blogEntry(blog, type) {
+        const title = escapeHtml(blog.title || 'Untitled');
+        const preview = escapeHtml((blog.content || '').replace(/<[^>]*>/g, '').substring(0, 150));
+        const date = new Date(blog.created_at || blog.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        const clickable = (type === 'published' || type === 'liked' || type === 'saved');
+
+        let metaHtml = '<span>' + date + '</span>';
+        if (type === 'published' && blog.likes_count !== undefined) metaHtml += '<span>❤ ' + blog.likes_count + '</span>';
+        if (type === 'liked' && blog.author) metaHtml += '<span style="color:var(--gold)">by ' + escapeHtml(blog.author) + '</span>';
+        if (type === 'saved' && blog.author) metaHtml += '<span style="color:var(--gold)">by ' + escapeHtml(blog.author) + '</span>';
+
+        let actionsHtml = '';
+        if (type === 'draft') {
+            actionsHtml = `<a class="b-edit" href="/api/blogs/create-ui?draft_id=${blog.blog_id}">Continue</a>
+                <button class="b-del" onclick="event.stopPropagation();deleteBlog('${blog.blog_id}')">Delete</button>`;
+        } else if (type === 'published') {
+            actionsHtml = `<a class="b-edit" href="/api/blogs/create-ui?draft_id=${blog.blog_id}" onclick="event.stopPropagation()">Edit</a>
+                <button class="b-del" onclick="event.stopPropagation();deleteBlog('${blog.blog_id}')">Delete</button>`;
         }
 
-        async function loadDrafts() {
-            const panel = document.getElementById('panel-drafts');
-            try {
-                const res = await fetch('/api/blogs/my-drafts');
-                const data = await res.json();
-                if (res.ok && data.drafts.length > 0) {
-                    panel.innerHTML = data.drafts.map(d => blogCard(d, 'draft')).join('');
-                } else {
-                    panel.innerHTML = '<div class="empty-state">No drafts. <a href="/api/blogs/create-ui">Start writing!</a></div>';
-                }
-            } catch (err) {
-                panel.innerHTML = '<div class="empty-state">Failed to load drafts.</div>';
-            }
+        const titleClick = clickable ? `onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'"` : '';
+
+        return `<div class="entry">
+            <div class="entry-body">
+                <h4 ${titleClick}>${title}</h4>
+                <p>${preview}${preview.length >= 150 ? '…' : ''}</p>
+                <div class="entry-meta">${metaHtml}</div>
+            </div>
+            <div class="entry-actions">${actionsHtml}</div>
+        </div>`;
+    }
+
+    async function deleteBlog(blogId) {
+        if (!confirm('Are you sure you want to delete this blog?')) return;
+        try {
+            const res = await fetch('/api/blogs/delete/' + blogId, { method: 'DELETE' });
+            if (res.ok) { loadPublished(); loadDrafts(); }
+            else { const data = await res.json(); alert(data.error || 'Failed to delete'); }
+        } catch (err) {
+            console.error('Error deleting blog:', err);
         }
+    }
 
-        async function loadLiked() {
-            const panel = document.getElementById('panel-liked');
-            try {
-                const res = await fetch('/api/blogs/my-liked');
-                const data = await res.json();
-                if (res.ok && data.blogs.length > 0) {
-                    panel.innerHTML = data.blogs.map(b => blogCard(b, 'liked')).join('');
-                } else {
-                    panel.innerHTML = '<div class="empty-state">You haven\'t liked any blogs yet. <a href="/api/blogs/feed-ui">Explore the feed!</a></div>';
-                }
-            } catch (err) {
-                panel.innerHTML = '<div class="empty-state">Failed to load liked blogs.</div>';
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // --- Notifications ---
+    async function loadNotifications() {
+        try {
+            const res = await fetch('/api/blogs/notifications');
+            if (!res.ok) return;
+            const data = await res.json();
+            const badge = document.getElementById('notifBadge');
+            if (data.unread_count > 0) {
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
             }
+            const list = document.getElementById('notifList');
+            if (!data.notifications || data.notifications.length === 0) {
+                list.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+                return;
+            }
+            list.innerHTML = data.notifications.map(n => {
+                const icon = n.type === 'like' ? '❤' : '💬';
+                const action = n.type === 'like' ? 'liked your blog' : 'commented on your blog';
+                const time = timeAgo(new Date(n.created_at));
+                return `<a class="notif-item ${!n.is_read ? 'unread' : ''}" href="/api/blogs/read-ui?id=${n.blog_id}">
+                    <div class="notif-ico">${icon}</div>
+                    <div class="notif-body">
+                        <div class="notif-text"><strong>${escapeHtml(n.actor_name)}</strong> ${action} <em>"${escapeHtml(n.blog_title || 'Untitled')}"</em></div>
+                        <div class="notif-when">${time}</div>
+                    </div>
+                </a>`;
+            }).join('');
+        } catch (err) {
+            console.error('Error loading notifications:', err);
         }
+    }
 
-        function blogCard(blog, type) {
-            const title = blog.title || 'Untitled';
-            const content = (blog.content || '').substring(0, 150) + ((blog.content || '').length > 150 ? '...' : '');
-            const date = new Date(blog.created_at || blog.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-
-            let meta = '<span>' + date + '</span>';
-            if (type === 'published' && blog.likes_count !== undefined) {
-                meta += '<span>' + blog.likes_count + ' likes</span>';
-            }
-            if (type === 'liked' && blog.author) {
-                meta += '<span class="author">by ' + blog.author + '</span>';
-            }
-
-            let btn = '';
-            if (type === 'draft') {
-                btn = '<div style="margin-top: 10px; display:flex; gap:0.5rem;">' +
-                    '<a href="/api/blogs/create-ui?draft_id=' + blog.blog_id + '" class="btn btn-secondary" style="text-decoration: none; display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.85rem;">Continue Writing</a>' +
-                    '<button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="event.stopPropagation(); deleteBlog(\'' + blog.blog_id + '\')">Delete</button>' +
-                    '</div>';
-            }
-            if (type === 'published') {
-                btn = '<div style="margin-top: 10px; display:flex; gap:0.5rem;">' +
-                    '<a href="/api/blogs/create-ui?draft_id=' + blog.blog_id + '" class="btn btn-secondary" style="text-decoration: none; display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="event.stopPropagation()">Edit</a>' +
-                    '<button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="event.stopPropagation(); deleteBlog(\'' + blog.blog_id + '\')">Delete</button>' +
-                    '</div>';
-            }
-
-            let clickable = (type === 'published' || type === 'liked' || type === 'saved');
-            let openTag = clickable ? '<div class="blog-card" style="cursor:pointer;" onclick="window.location.href=\'/api/blogs/read-ui?id=' + blog.blog_id + '\'">' : '<div class="blog-card">';
-
-            return openTag +
-                '<h4>' + escapeHtml(title) + '</h4>' +
-                '<p>' + escapeHtml(content) + '</p>' +
-                '<div class="meta">' + meta + '</div>' +
-                btn +
-                '</div>';
+    function toggleNotifDropdown() {
+        const dropdown = document.getElementById('notifDropdown');
+        const isOpen = dropdown.classList.toggle('open');
+        if (isOpen) {
+            fetch('/api/blogs/notifications/read', { method: 'PATCH' })
+                .then(() => {
+                    document.getElementById('notifBadge').classList.remove('show');
+                    document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+                })
+                .catch(err => console.error('Error marking read:', err));
         }
+    }
 
-        async function deleteBlog(blogId) {
-            if (!confirm('Are you sure you want to delete this blog?')) return;
-            try {
-                const res = await fetch('/api/blogs/delete/' + blogId, { method: 'DELETE' });
-                if (res.ok) {
-                    loadPublished();
-                    loadDrafts();
-                } else {
-                    const data = await res.json();
-                    alert(data.error || 'Failed to delete blog');
-                }
-            } catch (err) {
-                console.error('Error deleting blog:', err);
-            }
+    document.addEventListener('click', (e) => {
+        const navRight = document.querySelector('.nav-right');
+        if (navRight && !navRight.contains(e.target)) {
+            document.getElementById('notifDropdown').classList.remove('open');
         }
+    });
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+    function timeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return 'just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return minutes + 'm ago';
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return hours + 'h ago';
+        const days = Math.floor(hours / 24);
+        if (days < 7) return days + 'd ago';
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
 
-        async function loadSaved() {
-            const panel = document.getElementById('panel-saved');
-            try {
-                const res = await fetch('/api/blogs/my-saved');
-                const data = await res.json();
-                if (res.ok && data.blogs.length > 0) {
-                    panel.innerHTML = data.blogs.map(b => blogCard(b, 'saved')).join('');
-                } else {
-                    panel.innerHTML = '<div class="empty-state">No saved blogs yet. <a href="/api/blogs/feed-ui">Explore the feed!</a></div>';
-                }
-            } catch (err) {
-                panel.innerHTML = '<div class="empty-state">Failed to load saved blogs.</div>';
-            }
-        }
-
-        // --- Init ---
-        loadProfile();
-        loadPublished();
-        loadDrafts();
-        loadLiked();
-        loadSaved();
-        loadNotifications();
-
-        // --- Notifications ---
-        async function loadNotifications() {
-            try {
-                const res = await fetch('/api/blogs/notifications');
-                if (!res.ok) return;
-                const data = await res.json();
-
-                const badge = document.getElementById('notifBadge');
-                if (data.unread_count > 0) {
-                    badge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
-
-                const list = document.getElementById('notifList');
-                if (data.notifications.length === 0) {
-                    list.innerHTML = '<div class="notif-empty">No notifications yet</div>';
-                    return;
-                }
-
-                list.innerHTML = data.notifications.map(n => {
-                    const icon = n.type === 'like' ? '❤️' : '💬';
-                    const action = n.type === 'like' ? 'liked your blog' : 'commented on your blog';
-                    const time = timeAgo(new Date(n.created_at));
-                    const unread = !n.is_read ? 'unread' : '';
-                    const title = escapeHtml(n.blog_title || 'Untitled');
-
-                    return `
-                        <a class="notif-item ${unread}" href="/api/blogs/read-ui?id=${n.blog_id}">
-                            <span class="notif-icon">${icon}</span>
-                            <div class="notif-body">
-                                <div class="notif-text"><strong>${escapeHtml(n.actor_name)}</strong> ${action} <em>"${title}"</em></div>
-                                <div class="notif-time">${time}</div>
-                            </div>
-                        </a>
-                    `;
-                }).join('');
-            } catch (err) {
-                console.error('Error loading notifications:', err);
-            }
-        }
-
-        function toggleNotifDropdown() {
-            const dropdown = document.getElementById('notifDropdown');
-            const isOpen = dropdown.classList.toggle('open');
-
-            if (isOpen) {
-                // Mark all as read
-                fetch('/api/blogs/notifications/read', { method: 'PATCH' })
-                    .then(() => {
-                        document.getElementById('notifBadge').classList.add('hidden');
-                        // Remove unread highlights
-                        document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
-                    })
-                    .catch(err => console.error('Error marking read:', err));
-            }
-        }
-
-        // Close dropdown on outside click
-        document.addEventListener('click', (e) => {
-            const wrapper = document.querySelector('.notif-wrapper');
-            if (wrapper && !wrapper.contains(e.target)) {
-                document.getElementById('notifDropdown').classList.remove('open');
-            }
-        });
-
-        function timeAgo(date) {
-            const seconds = Math.floor((new Date() - date) / 1000);
-            if (seconds < 60) return 'just now';
-            const minutes = Math.floor(seconds / 60);
-            if (minutes < 60) return minutes + 'm ago';
-            const hours = Math.floor(minutes / 60);
-            if (hours < 24) return hours + 'h ago';
-            const days = Math.floor(hours / 24);
-            if (days < 7) return days + 'd ago';
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-    </script>
+    loadProfile();
+    loadPublished();
+    loadDrafts();
+    loadLiked();
+    loadSaved();
+    loadNotifications();
+</script>
 </body>
 </html>

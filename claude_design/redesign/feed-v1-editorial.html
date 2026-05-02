@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed — Lumen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        /* ─────────────────────────────────────────────
+           Lumen — Editorial Dark Design System
+           ───────────────────────────────────────────── */
+        :root {
+            --bg-base:        #0a0f1e;
+            --bg-surface:     #111827;
+            --bg-elevated:    #1a2236;
+
+            --glass-bg:       rgba(255,255,255,0.04);
+            --glass-border:   rgba(255,255,255,0.08);
+            --glass-hover:    rgba(255,255,255,0.07);
+            --glass-strong:   rgba(255,255,255,0.10);
+
+            --text-primary:   #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted:     #94a3b8;
+            --text-subtle:    #64748b;
+
+            --accent-1:       #6366f1;
+            --accent-2:       #8b5cf6;
+            --accent-grad:    linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --accent-soft:    rgba(139,92,246,0.15);
+
+            --danger:         #f43f5e;
+            --success:        #10b981;
+
+            --shadow-sm:      0 2px 8px rgba(0,0,0,0.3);
+            --shadow-md:      0 8px 24px rgba(0,0,0,0.35);
+            --shadow-lg:      0 24px 48px -12px rgba(0,0,0,0.5);
+            --shadow-glow:    0 8px 32px rgba(99,102,241,0.25);
+
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+            --radius-pill: 999px;
+
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --dur:  250ms;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            background: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-feature-settings: "ss01", "cv11";
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        body {
+            background:
+                radial-gradient(ellipse 80% 60% at 80% -10%, rgba(139,92,246,0.12), transparent 60%),
+                radial-gradient(ellipse 60% 50% at 0% 5%, rgba(99,102,241,0.08), transparent 60%),
+                var(--bg-base);
+            background-attachment: fixed;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+        input, textarea { font-family: inherit; }
+
+        ::selection { background: var(--accent-soft); color: var(--text-primary); }
+
+        /* ─────── Top Nav ─────── */
+        .nav {
+            position: sticky; top: 0; z-index: 50;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 2.5rem;
+            background: rgba(10,15,30,0.65);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .nav-brand {
+            display: flex; align-items: center; gap: 0.65rem;
+            font-weight: 700; font-size: 1.05rem;
+            letter-spacing: -0.01em;
+        }
+        .nav-brand-mark {
+            width: 28px; height: 28px; border-radius: 8px;
+            background: var(--accent-grad);
+            display: grid; place-items: center;
+            box-shadow: var(--shadow-glow);
+            font-weight: 800; font-size: .9rem; color: white;
+        }
+        .nav-links { display: flex; align-items: center; gap: 0.4rem; }
+        .nav-link {
+            padding: 0.5rem 0.95rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-radius: var(--radius-pill);
+            transition: all var(--dur) var(--ease);
+        }
+        .nav-link:hover { color: var(--text-primary); background: var(--glass-bg); }
+        .nav-link.active { color: var(--text-primary); background: var(--glass-bg); }
+        .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+        .nav-icon-btn {
+            width: 38px; height: 38px;
+            display: grid; place-items: center;
+            border-radius: var(--radius-pill);
+            color: var(--text-muted);
+            transition: all var(--dur) var(--ease);
+        }
+        .nav-icon-btn:hover { background: var(--glass-bg); color: var(--text-primary); }
+        .nav-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--accent-grad);
+            display: grid; place-items: center;
+            font-weight: 700; font-size: 0.85rem; color: white;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 3px transparent;
+            transition: box-shadow var(--dur) var(--ease);
+        }
+        .nav-avatar:hover { box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 3px var(--accent-1); }
+
+        /* ─────── Page wrap ─────── */
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 3.5rem 2.5rem 6rem;
+        }
+
+        /* ─────── Header ─────── */
+        .feed-header { margin-bottom: 2.75rem; }
+        .feed-eyebrow {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            font-size: 0.75rem; font-weight: 600;
+            color: var(--accent-2);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.85rem;
+        }
+        .feed-eyebrow::before {
+            content: ''; width: 6px; height: 6px; border-radius: 50%;
+            background: var(--accent-2);
+            box-shadow: 0 0 12px var(--accent-2);
+        }
+        .feed-title {
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            line-height: 1.05;
+            color: var(--text-primary);
+            margin-bottom: 0.65rem;
+        }
+        .feed-title em {
+            font-family: 'Newsreader', serif;
+            font-style: italic;
+            font-weight: 500;
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .feed-sub {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            max-width: 560px;
+        }
+
+        /* ─────── Search ─────── */
+        .search-card {
+            margin-top: 2rem;
+            display: flex; align-items: center; gap: 0.75rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+            transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+        }
+        .search-card:focus-within {
+            border-color: rgba(139,92,246,0.4);
+            box-shadow: 0 0 0 4px rgba(139,92,246,0.08);
+        }
+        .search-card svg { color: var(--text-muted); flex-shrink: 0; }
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            padding: 0.95rem 0;
+        }
+        .search-input::placeholder { color: var(--text-subtle); }
+        .search-btn {
+            padding: 0.7rem 1.4rem;
+            border-radius: var(--radius-pill);
+            background: var(--accent-grad);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex; align-items: center; gap: 0.4rem;
+            transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+        }
+        .search-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+        .search-btn:active { transform: translateY(0); }
+
+        /* ─────── Filter chips ─────── */
+        .chips {
+            display: flex; gap: 0.5rem; flex-wrap: wrap;
+            margin: 1.5rem 0 2.5rem;
+        }
+        .chip {
+            padding: 0.5rem 1rem;
+            font-size: 0.825rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-pill);
+            transition: all var(--dur) var(--ease);
+        }
+        .chip:hover { color: var(--text-primary); background: var(--glass-hover); }
+        .chip.active {
+            color: var(--text-primary);
+            background: var(--glass-strong);
+            border-color: rgba(139,92,246,0.4);
+        }
+        .chip.active::before {
+            content: '✦ ';
+            color: var(--accent-2);
+        }
+
+        /* ─────── Section heading ─────── */
+        .section-head {
+            display: flex; align-items: baseline; justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+        .section-head h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+        .section-head .count {
+            font-size: 0.8rem;
+            color: var(--text-subtle);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ─────── Feed list ─────── */
+        .feed-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-bottom: 3rem;
+        }
+        .blog-card {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            padding: 1.75rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--dur) var(--ease);
+        }
+        .blog-card:hover {
+            background: var(--glass-hover);
+            border-color: rgba(255,255,255,0.14);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .blog-card-body { min-width: 0; }
+        .blog-card-meta {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.85rem;
+        }
+        .blog-card-meta .avatar-sm {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: var(--accent-grad);
+            display: grid; place-items: center;
+            font-weight: 700; font-size: 0.7rem; color: white;
+        }
+        .blog-card-meta .author-name {
+            color: var(--text-secondary); font-weight: 500;
+        }
+        .blog-card-meta .author-name:hover { color: var(--accent-2); }
+        .blog-card-meta .dot { color: var(--text-subtle); }
+        .blog-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: -0.018em;
+            color: var(--text-primary);
+            margin-bottom: 0.6rem;
+        }
+        .blog-card-preview {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        .blog-card-foot {
+            display: flex; align-items: center; gap: 1.25rem;
+            font-size: 0.82rem;
+            color: var(--text-subtle);
+        }
+        .blog-card-foot .stat {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .blog-card-foot .like-btn {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            color: var(--text-subtle);
+            transition: color var(--dur) var(--ease);
+        }
+        .blog-card-foot .like-btn:hover { color: var(--danger); }
+        .blog-card-foot .like-btn.active { color: var(--danger); }
+        .blog-card-foot .topic-tag {
+            margin-left: auto;
+            color: var(--accent-2);
+            font-weight: 500;
+        }
+
+        .blog-card-thumb {
+            width: 180px; height: 130px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15));
+            border: 1px solid var(--glass-border);
+            position: relative;
+            overflow: hidden;
+        }
+        .blog-card-thumb::after {
+            content: '';
+            position: absolute; inset: 0;
+            background-image:
+                repeating-linear-gradient(135deg, transparent 0 14px, rgba(255,255,255,0.04) 14px 15px);
+        }
+        .blog-card-thumb.thumb-2 { background: linear-gradient(135deg, rgba(244,63,94,0.2), rgba(245,158,11,0.15)); }
+        .blog-card-thumb.thumb-3 { background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(99,102,241,0.18)); }
+        .blog-card-thumb.thumb-4 { background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(244,63,94,0.18)); }
+        .blog-card-thumb.thumb-5 { background: linear-gradient(135deg, rgba(99,102,241,0.22), rgba(14,165,233,0.18)); }
+
+        /* ─────── Featured card (first item) ─────── */
+        .featured {
+            grid-template-columns: 1.4fr 1fr;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.04));
+        }
+        .featured .blog-card-body { padding: 2.5rem; align-self: center; }
+        .featured h3 {
+            font-size: 2.1rem;
+            line-height: 1.15;
+            margin-bottom: 0.85rem;
+        }
+        .featured .blog-card-preview {
+            font-size: 1rem;
+            -webkit-line-clamp: 3;
+            margin-bottom: 1.5rem;
+        }
+        .featured .blog-card-thumb {
+            width: 100%;
+            height: 100%;
+            min-height: 320px;
+            border-radius: 0;
+            border: none;
+            border-left: 1px solid var(--glass-border);
+        }
+        .featured-tag {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-2);
+            margin-bottom: 1rem;
+        }
+        .featured-tag::before {
+            content: '✦';
+        }
+
+        /* ─────── Author results card (search) ─────── */
+        .author-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 2.5rem;
+        }
+        .author-card {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 1.25rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--dur) var(--ease);
+        }
+        .author-card:hover {
+            background: var(--glass-hover);
+            transform: translateY(-2px);
+        }
+        .author-card .avatar-md {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: var(--accent-grad);
+            display: grid; place-items: center;
+            font-weight: 700; font-size: 1.1rem; color: white;
+            flex-shrink: 0;
+        }
+        .author-card .author-info { min-width: 0; }
+        .author-card .author-info h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .author-card .author-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        /* ─────── Empty / Loading ─────── */
+        .skeleton-card {
+            height: 180px;
+            background: linear-gradient(90deg,
+                var(--glass-bg) 0%,
+                rgba(255,255,255,0.06) 50%,
+                var(--glass-bg) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--glass-border);
+            margin-bottom: 0.75rem;
+        }
+        @keyframes shimmer { to { background-position: -200% 0; } }
+        .empty {
+            text-align: center;
+            padding: 5rem 2rem;
+            color: var(--text-muted);
+        }
+        .empty-icon {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            display: grid; place-items: center;
+            margin: 0 auto 1.25rem;
+            color: var(--accent-2);
+        }
+        .empty h3 {
+            font-family: 'Newsreader', serif;
+            font-weight: 500;
+            font-style: italic;
+            font-size: 1.6rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ─────── Toast ─────── */
+        .toast {
+            position: fixed;
+            bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(120%);
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.85rem 1.4rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.9rem;
+            box-shadow: var(--shadow-lg);
+            transition: transform 350ms var(--ease);
+            z-index: 100;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast .check {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: var(--accent-grad);
+            display: grid; place-items: center;
+            font-size: 0.7rem;
+        }
+
+        /* fade in */
+        .stagger > * { opacity: 0; animation: rise .5s var(--ease) forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0ms; }
+        .stagger > *:nth-child(2) { animation-delay: 50ms; }
+        .stagger > *:nth-child(3) { animation-delay: 100ms; }
+        .stagger > *:nth-child(4) { animation-delay: 150ms; }
+        .stagger > *:nth-child(5) { animation-delay: 200ms; }
+        .stagger > *:nth-child(6) { animation-delay: 250ms; }
+        .stagger > *:nth-child(n+7) { animation-delay: 300ms; }
+        @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 760px) {
+            .nav { padding: 1rem 1.25rem; }
+            .nav-links { display: none; }
+            .page { padding: 2rem 1.25rem 5rem; }
+            .blog-card { grid-template-columns: 1fr; gap: 1rem; }
+            .blog-card-thumb { width: 100%; height: 160px; }
+            .featured { grid-template-columns: 1fr; }
+            .featured .blog-card-thumb { min-height: 200px; border-left: none; border-top: 1px solid var(--glass-border); }
+            .featured h3 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ─────────── Top Nav ─────────── -->
+<nav class="nav">
+    <div class="nav-brand">
+        <div class="nav-brand-mark">L</div>
+        <span>Lumen</span>
+    </div>
+    <div class="nav-links">
+        <a class="nav-link" href="dashboard.html">Home</a>
+        <a class="nav-link active" href="feed.html">Feed</a>
+        <a class="nav-link" href="create-blog.html">Write</a>
+    </div>
+    <div class="nav-right">
+        <button class="nav-icon-btn" title="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </button>
+        <a class="nav-avatar" href="profile.html" title="Profile">M</a>
+    </div>
+</nav>
+
+<!-- ─────────── Page ─────────── -->
+<main class="page">
+    <header class="feed-header">
+        <div class="feed-eyebrow">For you · tuned today</div>
+        <h1 class="feed-title">Stories <em>matched</em> to your taste.</h1>
+        <p class="feed-sub">A handpicked feed shaped by what you read, like, and linger on. The more you engage, the sharper it gets.</p>
+
+        <!-- Search -->
+        <div class="search-card">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input class="search-input" id="searchInput" type="text" placeholder="Search semantically — try “quiet luxury in software design”" />
+            <button class="search-btn" onclick="searchBlogs()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 5 7 7-7 7"/></svg>
+                Search
+            </button>
+        </div>
+
+        <!-- Topic chips -->
+        <div class="chips">
+            <button class="chip active" data-chip="all">All</button>
+            <button class="chip" data-chip="design">Design</button>
+            <button class="chip" data-chip="ai">AI &amp; ML</button>
+            <button class="chip" data-chip="philosophy">Philosophy</button>
+            <button class="chip" data-chip="craft">Craft</button>
+            <button class="chip" data-chip="essay">Long reads</button>
+        </div>
+    </header>
+
+    <!-- Section: For You -->
+    <div class="section-head">
+        <h2>Curated for you</h2>
+        <span class="count" id="resultCount">12 stories</span>
+    </div>
+
+    <div id="feedContainer" class="feed-list stagger">
+        <!-- Cards injected by JS -->
+    </div>
+</main>
+
+<!-- ─────── Toast ─────── -->
+<div class="toast" id="toast">
+    <span class="check">✓</span>
+    <span id="toastMsg">Liked — your taste profile is sharper now</span>
+</div>
+
+<script>
+    // Backend integration preserved — falls back to mock data so the design renders standalone.
+    const token = localStorage.getItem('token');
+
+    // ── Mock fallback data (only used when API unavailable) ──
+    const MOCK_BLOGS = [
+        {
+            blog_id: '1', author_id: 'a1', author: 'Iris Chen',
+            title: 'The quiet revolution of small interfaces',
+            content: 'For a decade we treated software as territory to be conquered with density and chrome. The new craft is restraint — interfaces that breathe, that whisper, that trust the user to know what to do. This is a love letter to the unfilled inch.',
+            created_at: '2026-04-22T10:00:00Z', likes_count: 248, comments_count: 31, topic: 'Design'
+        },
+        {
+            blog_id: '2', author_id: 'a2', author: 'Theo Vance',
+            title: 'Why your model needs a smaller mind',
+            content: 'Not every problem demands a 70B-parameter answer. The most interesting work I’ve seen this year comes from teams who deliberately chose a smaller model and a sharper prompt over the inverse.',
+            created_at: '2026-04-20T14:30:00Z', likes_count: 412, comments_count: 67, topic: 'AI & ML'
+        },
+        {
+            blog_id: '3', author_id: 'a3', author: 'Mira Solberg',
+            title: 'Notes from a year without notifications',
+            content: 'I turned off every push for 365 days. Here’s what I lost, what I gained, and what I learned about my own attention that no productivity book ever taught me.',
+            created_at: '2026-04-18T09:15:00Z', likes_count: 1124, comments_count: 203, topic: 'Philosophy'
+        },
+        {
+            blog_id: '4', author_id: 'a4', author: 'Daniel Okafor',
+            title: 'The case for boring databases',
+            content: 'Postgres is forty years old and it will outlive your startup. A meditation on choosing tools that age like timber, not like milk.',
+            created_at: '2026-04-15T11:00:00Z', likes_count: 387, comments_count: 54, topic: 'Craft'
+        },
+        {
+            blog_id: '5', author_id: 'a5', author: 'Anya Petrov',
+            title: 'On finishing things',
+            content: 'I have eleven half-built projects in a folder called “later.” This is an essay about why “later” is the most expensive word in the English language.',
+            created_at: '2026-04-12T16:45:00Z', likes_count: 891, comments_count: 142, topic: 'Long reads'
+        },
+        {
+            blog_id: '6', author_id: 'a6', author: 'Hassan Mirza',
+            title: 'A grammar for system design interviews',
+            content: 'Most candidates fail not because they don’t know the answer, but because they can’t structure the conversation. Here’s the rubric I wish someone had given me at 24.',
+            created_at: '2026-04-10T08:30:00Z', likes_count: 556, comments_count: 89, topic: 'Craft'
+        }
+    ];
+
+    const MOCK_AUTHORS = [
+        { author_id: 'a1', username: 'Iris Chen', created_at: '2023-08-10', followers: 2400 },
+        { author_id: 'a2', username: 'Theo Vance', created_at: '2024-01-15', followers: 1180 },
+        { author_id: 'a3', username: 'Mira Solberg', created_at: '2022-05-20', followers: 8900 }
+    ];
+
+    // ── Helpers ──
+    function escapeHtml(text) {
+        const d = document.createElement('div');
+        d.textContent = text || '';
+        return d.innerHTML;
+    }
+    function timeAgo(date) {
+        const d = (date instanceof Date) ? date : new Date(date);
+        const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+        if (days === 0) return 'today';
+        if (days === 1) return 'yesterday';
+        if (days < 7) return days + 'd ago';
+        if (days < 30) return Math.floor(days/7) + 'w ago';
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+    function initial(name) { return (name || '?').charAt(0).toUpperCase(); }
+    function formatNum(n) {
+        if (n >= 1000) return (n/1000).toFixed(1).replace(/\.0$/, '') + 'k';
+        return String(n);
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent = msg;
+        t.classList.add('show');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => t.classList.remove('show'), 2400);
+    }
+
+    // ── Card builders ──
+    function blogCardHTML(blog, idx) {
+        const featured = idx === 0;
+        const thumbCls = ['', 'thumb-2', 'thumb-3', 'thumb-4', 'thumb-5'][idx % 5];
+        const liked = blog._liked ? 'active' : '';
+        return `
+        <article class="blog-card ${featured ? 'featured' : ''}" onclick="openBlog('${blog.blog_id}')">
+            <div class="blog-card-body">
+                ${featured ? '<div class="featured-tag">Editor’s pick</div>' : ''}
+                <div class="blog-card-meta">
+                    <span class="avatar-sm">${escapeHtml(initial(blog.author))}</span>
+                    <a class="author-name" href="author.html?id=${encodeURIComponent(blog.author_id)}" onclick="event.stopPropagation()">${escapeHtml(blog.author || 'Anonymous')}</a>
+                    <span class="dot">·</span>
+                    <span>${timeAgo(blog.created_at)}</span>
+                    <span class="dot">·</span>
+                    <span>${Math.max(2, Math.ceil((blog.content||'').length / 800))} min read</span>
+                </div>
+                <h3>${escapeHtml(blog.title)}</h3>
+                <p class="blog-card-preview">${escapeHtml((blog.content || '').replace(/<[^>]*>/g,'').substring(0, featured ? 240 : 180))}</p>
+                <div class="blog-card-foot">
+                    <button class="like-btn ${liked}" onclick="event.stopPropagation(); likeBlog('${blog.blog_id}', this)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
+                        <span>${formatNum(blog.likes_count || 0)}</span>
+                    </button>
+                    <span class="stat">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        ${formatNum(blog.comments_count || 0)}
+                    </span>
+                    ${blog.topic ? `<span class="topic-tag">${escapeHtml(blog.topic)}</span>` : ''}
+                </div>
+            </div>
+            <div class="blog-card-thumb ${thumbCls}" aria-hidden="true"></div>
+        </article>`;
+    }
+
+    function authorCardHTML(author) {
+        return `
+        <a class="author-card" href="author.html?id=${encodeURIComponent(author.author_id)}">
+            <div class="avatar-md">${escapeHtml(initial(author.username))}</div>
+            <div class="author-info">
+                <h4>${escapeHtml(author.username)}</h4>
+                <p>${author.followers ? formatNum(author.followers) + ' followers · ' : ''}Member since ${new Date(author.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}</p>
+            </div>
+        </a>`;
+    }
+
+    // ── Render ──
+    function renderFeed(blogs) {
+        const c = document.getElementById('feedContainer');
+        document.getElementById('resultCount').textContent = blogs.length + (blogs.length === 1 ? ' story' : ' stories');
+        if (!blogs.length) {
+            c.classList.remove('stagger');
+            c.innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <h3>Nothing here yet</h3>
+                    <p>Read a few stories or like one — your feed warms up fast.</p>
+                </div>`;
+            return;
+        }
+        c.classList.add('stagger');
+        c.innerHTML = blogs.map((b, i) => blogCardHTML(b, i)).join('');
+    }
+
+    function renderSearch(blogs, authors) {
+        const c = document.getElementById('feedContainer');
+        c.classList.remove('stagger');
+        const total = blogs.length + authors.length;
+        document.getElementById('resultCount').textContent = total + ' result' + (total === 1 ? '' : 's');
+        if (total === 0) {
+            c.innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
+                    <h3>No matches found</h3>
+                    <p>Try a broader phrase, or clear the search to return to your feed.</p>
+                </div>`;
+            return;
+        }
+        let html = '';
+        if (authors.length) {
+            html += `<div class="section-head" style="margin-top:.5rem;"><h2>Authors</h2><span class="count">${authors.length}</span></div>`;
+            html += `<div class="author-grid">${authors.map(authorCardHTML).join('')}</div>`;
+        }
+        if (blogs.length) {
+            html += `<div class="section-head"><h2>Stories</h2><span class="count">${blogs.length}</span></div>`;
+            html += `<div class="feed-list">${blogs.map((b,i) => blogCardHTML(b, i)).join('')}</div>`;
+        }
+        c.innerHTML = html;
+    }
+
+    function renderSkeleton() {
+        const c = document.getElementById('feedContainer');
+        c.classList.remove('stagger');
+        c.innerHTML = Array(4).fill('<div class="skeleton-card"></div>').join('');
+    }
+
+    // ── API ──
+    async function loadFeed() {
+        renderSkeleton();
+        try {
+            const r = await fetch('/api/blogs/feed', { headers: token ? { 'Authorization': 'Bearer ' + token } : {} });
+            if (!r.ok) throw new Error('api');
+            const data = await r.json();
+            const blogs = data.feed || [];
+            renderFeed(blogs.length ? blogs : MOCK_BLOGS);
+        } catch (e) {
+            renderFeed(MOCK_BLOGS);
+        }
+    }
+
+    async function searchBlogs() {
+        const q = document.getElementById('searchInput').value.trim();
+        if (!q) return loadFeed();
+        renderSkeleton();
+        try {
+            const r = await fetch('/api/blogs/search?q=' + encodeURIComponent(q), { headers: token ? { 'Authorization': 'Bearer ' + token } : {} });
+            if (!r.ok) throw new Error('api');
+            const d = await r.json();
+            renderSearch(d.blogs || [], d.authors || []);
+        } catch (e) {
+            // mock search: filter MOCK_BLOGS by simple substring
+            const ql = q.toLowerCase();
+            const blogs = MOCK_BLOGS.filter(b => (b.title + ' ' + b.content).toLowerCase().includes(ql));
+            const authors = MOCK_AUTHORS.filter(a => a.username.toLowerCase().includes(ql));
+            renderSearch(blogs, authors);
+        }
+    }
+
+    async function likeBlog(id, btnEl) {
+        const wasLiked = btnEl.classList.contains('active');
+        // Optimistic update
+        btnEl.classList.toggle('active');
+        const numEl = btnEl.querySelector('span');
+        const heart = btnEl.querySelector('svg');
+        const cur = parseInt(numEl.textContent.replace('k','000')) || 0;
+        const next = wasLiked ? cur - 1 : cur + 1;
+        numEl.textContent = formatNum(next);
+        heart.setAttribute('fill', wasLiked ? 'none' : 'currentColor');
+
+        if (!wasLiked) showToast('Liked — your taste profile is sharper now');
+
+        try {
+            await fetch('/api/blogs/like/' + id, {
+                method: 'POST',
+                headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+            });
+        } catch(e) { /* ignore — optimistic */ }
+    }
+
+    function openBlog(id) {
+        window.location.href = 'read-blog.html?id=' + encodeURIComponent(id);
+    }
+
+    // Chip handlers
+    document.querySelectorAll('.chip').forEach(c => {
+        c.addEventListener('click', () => {
+            document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+            c.classList.add('active');
+            const k = c.dataset.chip;
+            if (k === 'all') return renderFeed(MOCK_BLOGS);
+            const filtered = MOCK_BLOGS.filter(b => (b.topic||'').toLowerCase().includes(k));
+            renderFeed(filtered);
+        });
+    });
+
+    document.getElementById('searchInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') searchBlogs();
+    });
+
+    // Boot
+    loadFeed();
+</script>
+
+</body>
+</html>

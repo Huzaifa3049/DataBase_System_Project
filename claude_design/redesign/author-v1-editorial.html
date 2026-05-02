@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anya Petrov — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg-base:#0a0f1e;--bg-surface:#111827;--bg-elevated:#1a2236;
+    --glass-bg:rgba(255,255,255,0.04);--glass-border:rgba(255,255,255,0.08);
+    --glass-hover:rgba(255,255,255,0.07);--glass-strong:rgba(255,255,255,0.10);
+    --text-primary:#f1f5f9;--text-secondary:#cbd5e1;--text-muted:#94a3b8;--text-subtle:#64748b;
+    --accent-1:#6366f1;--accent-2:#8b5cf6;
+    --accent-grad:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+    --danger:#f43f5e;
+    --shadow-md:0 8px 24px rgba(0,0,0,0.35);--shadow-glow:0 8px 32px rgba(99,102,241,0.25);
+    --radius-md:16px;--radius-pill:999px;
+    --ease:cubic-bezier(0.4,0,0.2,1);--dur:250ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg-base);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh}
+body{background:radial-gradient(ellipse 80% 40% at 50% 0%,rgba(139,92,246,0.10),transparent 60%),var(--bg-base);background-attachment:fixed}
+a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(10,15,30,0.65);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--glass-border)}
+.nav-brand{display:flex;align-items:center;gap:.65rem;font-weight:700;font-size:1.05rem}
+.nav-brand-mark{width:28px;height:28px;border-radius:8px;background:var(--accent-grad);display:grid;place-items:center;font-weight:800;font-size:.9rem;color:#fff}
+.nav-back{display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;color:var(--text-muted);padding:.5rem .95rem;border-radius:var(--radius-pill);transition:all var(--dur) var(--ease)}
+.nav-back:hover{color:var(--text-primary);background:var(--glass-bg)}
+.nav-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-grad);display:grid;place-items:center;font-weight:700;font-size:.85rem;color:#fff}
+
+/* Hero */
+.hero{max-width:1080px;margin:0 auto;padding:5rem 2.5rem 2.5rem;text-align:center}
+.avatar-xl{width:120px;height:120px;border-radius:50%;background:var(--accent-grad);display:grid;place-items:center;margin:0 auto 1.5rem;font-size:3rem;font-weight:700;color:#fff;box-shadow:var(--shadow-glow);overflow:hidden;border:3px solid var(--bg-base);outline:1px solid var(--glass-strong)}
+.author-name{font-size:2.6rem;font-weight:700;letter-spacing:-.025em;margin-bottom:.4rem}
+.author-bio{font-family:'Newsreader',serif;font-style:italic;color:var(--text-secondary);font-size:1.15rem;max-width:540px;margin:0 auto 1.75rem;text-wrap:balance}
+
+.stats-row{display:flex;justify-content:center;gap:3rem;margin-bottom:2rem;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;align-items:center;gap:.25rem}
+.stat .num{font-size:1.6rem;font-weight:700;letter-spacing:-.015em;font-variant-numeric:tabular-nums}
+.stat .lbl{font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+
+.follow-cluster{display:flex;justify-content:center;gap:.5rem}
+.follow-pill{padding:.7rem 1.8rem;border-radius:var(--radius-pill);background:var(--accent-grad);color:#fff;font-weight:600;font-size:.92rem;transition:all var(--dur) var(--ease)}
+.follow-pill:hover{transform:translateY(-1px);box-shadow:var(--shadow-glow)}
+.follow-pill.following{background:transparent;border:1px solid var(--glass-strong);color:var(--text-muted)}
+.follow-pill.following:hover{color:var(--danger);border-color:var(--danger);background:rgba(244,63,94,.08)}
+.btn-secondary{padding:.7rem 1.4rem;border-radius:var(--radius-pill);background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-secondary);font-weight:500;font-size:.92rem;transition:all var(--dur) var(--ease)}
+.btn-secondary:hover{background:var(--glass-hover);color:var(--text-primary)}
+
+/* Tabs (subtle) */
+.tabs-wrap{max-width:1080px;margin:0 auto;padding:0 2.5rem;border-bottom:1px solid var(--glass-border);display:flex;gap:.4rem;justify-content:center}
+.tab{padding:1rem 1.4rem;font-size:.9rem;font-weight:500;color:var(--text-muted);border-bottom:2px solid transparent;position:relative;top:1px;transition:color var(--dur) var(--ease)}
+.tab.active{color:var(--text-primary);border-bottom-color:var(--accent-2)}
+.tab .count{margin-left:.4rem;color:var(--text-subtle);font-size:.78rem}
+
+/* Story list — editorial */
+.list{max-width:760px;margin:0 auto;padding:3rem 2rem 6rem}
+.story{display:block;padding:2rem 0;border-bottom:1px solid var(--glass-border);transition:all var(--dur) var(--ease);cursor:pointer}
+.story:hover{padding-left:.5rem}
+.story h3{font-size:1.5rem;font-weight:700;letter-spacing:-.018em;line-height:1.25;margin-bottom:.6rem}
+.story p{color:var(--text-muted);font-size:1rem;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.85rem}
+.story-meta{display:flex;align-items:center;gap:1rem;font-size:.8rem;color:var(--text-subtle)}
+.story-meta .stat{display:inline-flex;align-items:center;gap:.3rem}
+
+.pagination{display:flex;justify-content:center;gap:.4rem;padding:2.5rem 0}
+.pg-btn{min-width:36px;height:36px;padding:0 .85rem;display:inline-grid;place-items:center;border-radius:var(--radius-pill);background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-secondary);font-size:.85rem;font-weight:500;transition:all var(--dur) var(--ease)}
+.pg-btn:hover:not(:disabled){background:var(--glass-hover);color:var(--text-primary)}
+.pg-btn.active{background:var(--accent-grad);color:#fff;border-color:transparent}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+
+@media(max-width:760px){.nav{padding:1rem 1.25rem}.hero,.tabs-wrap,.list{padding-left:1.25rem;padding-right:1.25rem}.hero{padding-top:3rem}}
+</style>
+</head>
+<body>
+<nav class="nav">
+    <div class="nav-brand"><div class="nav-brand-mark">L</div><span>Lumen</span></div>
+    <a class="nav-back" href="feed.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Back to feed</a>
+    <a class="nav-avatar" href="profile.html">M</a>
+</nav>
+
+<header class="hero">
+    <div class="avatar-xl">A</div>
+    <h1 class="author-name">Anya Petrov</h1>
+    <p class="author-bio">Writer of essays about attention, craft, and the boring middles of things.</p>
+    <div class="stats-row">
+        <div class="stat"><div class="num">38</div><div class="lbl">Stories</div></div>
+        <div class="stat"><div class="num">4,201</div><div class="lbl">Followers</div></div>
+        <div class="stat"><div class="num">128</div><div class="lbl">Following</div></div>
+    </div>
+    <div class="follow-cluster">
+        <button class="follow-pill" id="followBtn" onclick="toggleFollow()"><span>Follow</span></button>
+        <button class="btn-secondary">Message</button>
+    </div>
+    <div style="font-size:.8rem;color:var(--text-subtle);margin-top:1.25rem">Member since May 2022</div>
+</header>
+
+<div class="tabs-wrap">
+    <button class="tab active">Stories<span class="count">38</span></button>
+    <button class="tab">About</button>
+</div>
+
+<main class="list">
+    <article class="story">
+        <h3>On finishing things</h3>
+        <p>I have eleven half-built projects in a folder called “later.” This is an essay about why “later” is the most expensive word in the English language.</p>
+        <div class="story-meta"><span>Apr 12, 2026</span><span>·</span><span>8 min read</span><span class="stat">❤ 891</span><span class="stat">💬 142</span></div>
+    </article>
+    <article class="story">
+        <h3>The cost of a good idea</h3>
+        <p>Ideas are cheap. Distinguishing the few worth committing to from the many worth abandoning — that’s the actual work.</p>
+        <div class="story-meta"><span>Mar 20, 2026</span><span>·</span><span>6 min read</span><span class="stat">❤ 412</span><span class="stat">💬 67</span></div>
+    </article>
+    <article class="story">
+        <h3>Returning</h3>
+        <p>The most useful skill I’ve learned in a decade isn’t a framework. It’s the unglamorous act of opening the file again.</p>
+        <div class="story-meta"><span>Feb 14, 2026</span><span>·</span><span>4 min read</span><span class="stat">❤ 1.2k</span><span class="stat">💬 198</span></div>
+    </article>
+    <article class="story">
+        <h3>Notes on slowness</h3>
+        <p>Why I traded my productivity stack for a paper notebook and what I learned about the texture of my own attention.</p>
+        <div class="story-meta"><span>Jan 30, 2026</span><span>·</span><span>5 min read</span><span class="stat">❤ 678</span><span class="stat">💬 89</span></div>
+    </article>
+    <article class="story">
+        <h3>The boring middle</h3>
+        <p>Every project has a section without novelty or applause. Here’s how I’ve learned to sit with it instead of starting another.</p>
+        <div class="story-meta"><span>Jan 8, 2026</span><span>·</span><span>7 min read</span><span class="stat">❤ 534</span><span class="stat">💬 71</span></div>
+    </article>
+
+    <div class="pagination">
+        <button class="pg-btn" disabled>← Prev</button>
+        <button class="pg-btn active">1</button>
+        <button class="pg-btn">2</button>
+        <button class="pg-btn">3</button>
+        <button class="pg-btn">4</button>
+        <button class="pg-btn">Next →</button>
+    </div>
+</main>
+
+<script>
+function toggleFollow(){
+    const b=document.getElementById('followBtn'), wasFollowing=b.classList.toggle('following');
+    b.querySelector('span').textContent = wasFollowing ? 'Following' : 'Follow';
+}
+document.getElementById('followBtn').addEventListener('mouseenter',()=>{
+    const b=document.getElementById('followBtn');
+    if(b.classList.contains('following')) b.querySelector('span').textContent='Unfollow';
+});
+document.getElementById('followBtn').addEventListener('mouseleave',()=>{
+    const b=document.getElementById('followBtn');
+    if(b.classList.contains('following')) b.querySelector('span').textContent='Following';
+});
+</script>
+</body>
+</html>

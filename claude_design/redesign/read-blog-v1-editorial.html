@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>On finishing things — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg-base:#0a0f1e; --bg-surface:#111827; --bg-elevated:#1a2236;
+    --glass-bg:rgba(255,255,255,0.04); --glass-border:rgba(255,255,255,0.08);
+    --glass-hover:rgba(255,255,255,0.07); --glass-strong:rgba(255,255,255,0.10);
+    --text-primary:#f1f5f9; --text-secondary:#cbd5e1; --text-muted:#94a3b8; --text-subtle:#64748b;
+    --accent-1:#6366f1; --accent-2:#8b5cf6;
+    --accent-grad:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+    --danger:#f43f5e;
+    --shadow-md:0 8px 24px rgba(0,0,0,0.35); --shadow-glow:0 8px 32px rgba(99,102,241,0.25);
+    --radius-md:16px; --radius-pill:999px;
+    --ease:cubic-bezier(0.4,0,0.2,1); --dur:250ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg-base);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh}
+body{background:radial-gradient(ellipse 80% 60% at 80% -10%,rgba(139,92,246,0.10),transparent 60%),var(--bg-base);background-attachment:fixed}
+a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(10,15,30,0.65);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--glass-border)}
+.nav-brand{display:flex;align-items:center;gap:.65rem;font-weight:700;font-size:1.05rem}
+.nav-brand-mark{width:28px;height:28px;border-radius:8px;background:var(--accent-grad);display:grid;place-items:center;box-shadow:var(--shadow-glow);font-weight:800;font-size:.9rem;color:#fff}
+.nav-back{display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;color:var(--text-muted);padding:.5rem .95rem;border-radius:var(--radius-pill);transition:all var(--dur) var(--ease)}
+.nav-back:hover{color:var(--text-primary);background:var(--glass-bg)}
+.nav-right{display:flex;align-items:center;gap:.75rem}
+.nav-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-grad);display:grid;place-items:center;font-weight:700;font-size:.85rem;color:#fff;cursor:pointer}
+
+/* Article */
+.article{max-width:720px;margin:0 auto;padding:4rem 2rem 8rem}
+
+.eyebrow{display:inline-flex;align-items:center;gap:.5rem;font-size:.75rem;font-weight:600;color:var(--accent-2);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.25rem}
+.eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent-2);box-shadow:0 0 12px var(--accent-2)}
+
+h1.title{font-size:clamp(2.2rem,4.5vw,3.4rem);font-weight:700;letter-spacing:-.025em;line-height:1.1;margin-bottom:1.4rem;text-wrap:balance}
+.dek{font-family:'Newsreader',serif;font-style:italic;font-weight:400;font-size:1.4rem;color:var(--text-muted);line-height:1.5;margin-bottom:2.5rem;text-wrap:pretty}
+
+.author-row{display:flex;align-items:center;gap:1rem;padding:1rem 0;border-top:1px solid var(--glass-border);border-bottom:1px solid var(--glass-border);margin-bottom:3rem}
+.author-row .avatar{width:44px;height:44px;border-radius:50%;background:var(--accent-grad);display:grid;place-items:center;font-weight:700;color:#fff;cursor:pointer}
+.author-row .meta{flex:1;min-width:0}
+.author-row .meta .name{font-weight:600;font-size:.95rem;cursor:pointer}
+.author-row .meta .name:hover{color:var(--accent-2)}
+.author-row .meta .info{font-size:.82rem;color:var(--text-muted);margin-top:.1rem}
+.follow-pill{padding:.5rem 1.2rem;border-radius:var(--radius-pill);background:var(--accent-grad);color:#fff;font-weight:600;font-size:.85rem;transition:all var(--dur) var(--ease)}
+.follow-pill:hover{transform:translateY(-1px);box-shadow:var(--shadow-glow)}
+.follow-pill.following{background:transparent;border:1px solid var(--glass-strong);color:var(--text-muted)}
+.follow-pill.following:hover{color:var(--danger);border-color:var(--danger);background:rgba(244,63,94,0.08)}
+.follow-pill.following:hover::before{content:'Unfollow'}
+.follow-pill.following:hover span{display:none}
+
+/* Body */
+.body-text{font-family:'Newsreader',serif;font-size:1.18rem;line-height:1.8;color:var(--text-secondary);white-space:pre-wrap;word-wrap:break-word}
+.body-text p{margin-bottom:1.5rem;text-wrap:pretty}
+.body-text p::first-letter{}
+.body-text p:first-of-type::first-letter{
+    font-size:3.6rem;float:left;line-height:.9;padding:.4rem .65rem 0 0;
+    font-weight:600;color:var(--accent-2);
+    font-family:'Newsreader',serif;
+}
+.body-text blockquote{border-left:2px solid var(--accent-2);padding:.5rem 0 .5rem 1.5rem;margin:2rem 0;font-style:italic;color:var(--text-primary);font-size:1.3rem;line-height:1.5}
+
+/* Author card at bottom */
+.author-card-bottom{margin-top:4rem;padding:2rem;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius-md);display:grid;grid-template-columns:64px 1fr auto;gap:1.25rem;align-items:center}
+.author-card-bottom .avatar{width:64px;height:64px;border-radius:50%;background:var(--accent-grad);display:grid;place-items:center;font-weight:700;font-size:1.5rem;color:#fff}
+.author-card-bottom h3{font-size:1.1rem;font-weight:600;margin-bottom:.25rem}
+.author-card-bottom p{font-size:.88rem;color:var(--text-muted);line-height:1.5}
+.author-card-bottom .stats-row{display:flex;gap:1rem;margin-top:.5rem;font-size:.78rem;color:var(--text-subtle)}
+.author-card-bottom .stats-row strong{color:var(--text-secondary)}
+
+/* Floating action bar */
+.action-bar{position:fixed;left:50%;bottom:1.5rem;transform:translateX(-50%);display:flex;align-items:center;gap:.4rem;padding:.5rem;background:rgba(26,34,54,0.85);backdrop-filter:saturate(180%) blur(20px);border:1px solid var(--glass-strong);border-radius:var(--radius-pill);box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:30}
+.action-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.05rem;border-radius:var(--radius-pill);color:var(--text-muted);font-size:.875rem;font-weight:500;transition:all var(--dur) var(--ease)}
+.action-btn:hover{background:var(--glass-bg);color:var(--text-primary)}
+.action-btn.liked{color:var(--danger)} .action-btn.liked:hover{background:rgba(244,63,94,.1)}
+.action-btn.saved{color:var(--accent-2)}
+.action-bar .divider{width:1px;height:20px;background:var(--glass-border);margin:0 .15rem}
+
+/* Comments */
+.comments{margin-top:5rem;padding-top:3rem;border-top:1px solid var(--glass-border)}
+.comments h2{font-size:1.4rem;font-weight:600;letter-spacing:-.015em;margin-bottom:1.5rem}
+.comment-input{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:2rem}
+.comment-input .avatar{width:40px;height:40px;border-radius:50%;background:var(--accent-grad);display:grid;place-items:center;font-weight:700;color:#fff;font-size:.9rem;flex-shrink:0}
+.comment-input-wrap{flex:1}
+.comment-input textarea{width:100%;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:.95rem 1.1rem;color:var(--text-primary);font-size:.95rem;resize:none;min-height:48px;line-height:1.5;font-family:inherit;transition:border-color var(--dur) var(--ease)}
+.comment-input textarea:focus{outline:none;border-color:rgba(139,92,246,.4);box-shadow:0 0 0 4px rgba(139,92,246,.08)}
+.comment-input-actions{display:flex;justify-content:flex-end;margin-top:.6rem;gap:.5rem}
+.btn-ghost{padding:.55rem 1.1rem;font-size:.85rem;font-weight:500;color:var(--text-muted);border-radius:var(--radius-pill);transition:all var(--dur) var(--ease)}
+.btn-ghost:hover{color:var(--text-primary);background:var(--glass-bg)}
+.btn-primary{padding:.55rem 1.4rem;font-size:.85rem;font-weight:600;border-radius:var(--radius-pill);background:var(--accent-grad);color:#fff;transition:all var(--dur) var(--ease)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-glow)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+.comment{display:grid;grid-template-columns:40px 1fr;gap:.85rem;padding:1.1rem 0;border-bottom:1px solid var(--glass-border)}
+.comment .avatar{width:40px;height:40px;border-radius:50%;background:var(--accent-grad);display:grid;place-items:center;font-weight:700;color:#fff;font-size:.9rem}
+.comment-head{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.4rem;flex-wrap:wrap}
+.comment-head .name{font-weight:600;font-size:.92rem}
+.comment-head .when{font-size:.75rem;color:var(--text-subtle)}
+.comment-text{font-family:'Newsreader',serif;font-size:1.02rem;line-height:1.6;color:var(--text-secondary)}
+
+@media(max-width:760px){.nav{padding:1rem 1.25rem}.article{padding:2rem 1.25rem 7rem}.body-text{font-size:1.06rem}.action-bar{bottom:1rem}}
+</style>
+</head>
+<body>
+<nav class="nav">
+    <div class="nav-brand"><div class="nav-brand-mark">L</div><span>Lumen</span></div>
+    <a class="nav-back" href="feed.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Back to feed
+    </a>
+    <div class="nav-right"><a class="nav-avatar" href="profile.html">M</a></div>
+</nav>
+
+<article class="article">
+    <div class="eyebrow">Long read · 8 min</div>
+    <h1 class="title">On finishing things</h1>
+    <p class="dek">Eleven half-built projects in a folder called “later.” An essay about why “later” is the most expensive word in the English language.</p>
+
+    <div class="author-row">
+        <div class="avatar">A</div>
+        <div class="meta">
+            <div class="name">Anya Petrov</div>
+            <div class="info">Apr 12 · Member since 2022</div>
+        </div>
+        <button class="follow-pill"><span>Follow</span></button>
+    </div>
+
+    <div class="body-text">
+<p>There’s a folder on my laptop called <em>later</em>. It contains eleven directories, each one a project I started in earnest, made meaningful progress on, and then quietly abandoned at the moment it began to ask something difficult of me.</p>
+
+<p>For years I told myself I was a person who started things. This was true, and I wore it like a small medal. What I wasn’t telling myself is that starting is the easy part. The first eight hours of any project are mostly play — assembling, naming, choosing fonts, sketching diagrams that won’t survive contact with the real problem.</p>
+
+<blockquote>Finishing is the part where the project starts asking who you actually are.</blockquote>
+
+<p>Finishing is the part where the project stops being a fun rearrangement of possibility and starts asking who you actually are. It demands that you commit to one path while the others go dark. It requires you to be wrong, in public, with detail.</p>
+
+<p>So we don’t finish. We pivot, we “take a break,” we spin up something new because newness pretends to be progress. Meanwhile the half-built thing sits in <em>later</em>, accruing the kind of debt that compounds inside you rather than on a balance sheet.</p>
+
+<p>The most useful skill I’ve learned in the last decade isn’t a framework or a language. It’s the small, daily, unglamorous act of returning. Of opening the file again. Of sitting with the boring middle of the work — the part with no novelty, no applause, just the quiet conviction that you said you would.</p>
+    </div>
+
+    <!-- Author bottom card -->
+    <div class="author-card-bottom">
+        <div class="avatar">A</div>
+        <div>
+            <h3>Anya Petrov</h3>
+            <p>Writer of essays about attention, craft, and the boring middles of things.</p>
+            <div class="stats-row"><span><strong>4.2k</strong> followers</span><span><strong>38</strong> stories</span><span>Member since 2022</span></div>
+        </div>
+        <button class="follow-pill"><span>Follow</span></button>
+    </div>
+
+    <!-- Comments -->
+    <section class="comments">
+        <h2>Comments · 142</h2>
+        <div class="comment-input">
+            <div class="avatar">M</div>
+            <div class="comment-input-wrap">
+                <textarea id="commentInput" placeholder="Add to the conversation…" rows="1"></textarea>
+                <div class="comment-input-actions">
+                    <button class="btn-ghost">Cancel</button>
+                    <button class="btn-primary" id="postBtn" onclick="postComment()">Post comment</button>
+                </div>
+            </div>
+        </div>
+        <div id="commentsList">
+            <div class="comment">
+                <div class="avatar">I</div>
+                <div>
+                    <div class="comment-head"><span class="name">Iris Chen</span><span class="when">2 hours ago</span></div>
+                    <div class="comment-text">“The boring middle of the work” — I’m putting that on a sticky note. Also returning to my own <em>later</em> folder this weekend.</div>
+                </div>
+            </div>
+            <div class="comment">
+                <div class="avatar">T</div>
+                <div>
+                    <div class="comment-head"><span class="name">Theo Vance</span><span class="when">5 hours ago</span></div>
+                    <div class="comment-text">There’s a real cost to half-finished work that nobody talks about — it teaches you that you don’t finish. Every abandoned project is also a quiet lesson in your own non-completion.</div>
+                </div>
+            </div>
+            <div class="comment">
+                <div class="avatar">D</div>
+                <div>
+                    <div class="comment-head"><span class="name">Daniel Okafor</span><span class="when">Yesterday</span></div>
+                    <div class="comment-text">Bookmarking. The newness-as-progress reframe is exactly right.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+</article>
+
+<!-- Floating action bar -->
+<div class="action-bar">
+    <button class="action-btn" id="likeBtn" onclick="toggleLike()">
+        <svg id="likeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
+        <span id="likeCount">891</span>
+    </button>
+    <div class="divider"></div>
+    <button class="action-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>142</span>
+    </button>
+    <div class="divider"></div>
+    <button class="action-btn" id="saveBtn" onclick="toggleSave()">
+        <svg id="saveIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+        <span>Save</span>
+    </button>
+    <button class="action-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" x2="15.4" y1="13.5" y2="17.5"/><line x1="15.4" x2="8.6" y1="6.5" y2="10.5"/></svg>
+    </button>
+</div>
+
+<script>
+let liked=false, saved=false;
+function toggleLike(){
+    liked=!liked;
+    const btn=document.getElementById('likeBtn'), icon=document.getElementById('likeIcon'), c=document.getElementById('likeCount');
+    btn.classList.toggle('liked',liked);
+    icon.setAttribute('fill', liked ? 'currentColor' : 'none');
+    c.textContent = parseInt(c.textContent) + (liked?1:-1);
+}
+function toggleSave(){
+    saved=!saved;
+    const btn=document.getElementById('saveBtn'), icon=document.getElementById('saveIcon');
+    btn.classList.toggle('saved',saved);
+    icon.setAttribute('fill', saved ? 'currentColor' : 'none');
+    btn.querySelector('span').textContent = saved ? 'Saved' : 'Save';
+}
+// Follow pill toggle
+document.querySelectorAll('.follow-pill').forEach(b=>{
+    b.addEventListener('click',()=>{
+        const isFollowing = b.classList.toggle('following');
+        b.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
+    });
+});
+// Auto-grow textarea
+const ta = document.getElementById('commentInput');
+ta.addEventListener('input',()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; });
+function postComment(){
+    const v = ta.value.trim();
+    if(!v) return;
+    const list = document.getElementById('commentsList');
+    const div = document.createElement('div');
+    div.className='comment';
+    div.innerHTML = `<div class="avatar">M</div><div><div class="comment-head"><span class="name">You</span><span class="when">just now</span></div><div class="comment-text">${v.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div></div>`;
+    list.prepend(div);
+    ta.value=''; ta.style.height='auto';
+}
+</script>
+</body>
+</html>

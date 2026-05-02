@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg-base:#0a0f1e; --bg-surface:#111827; --bg-elevated:#1a2236;
+    --glass-bg:rgba(255,255,255,0.04); --glass-border:rgba(255,255,255,0.08);
+    --glass-hover:rgba(255,255,255,0.07); --glass-strong:rgba(255,255,255,0.10);
+    --text-primary:#f1f5f9; --text-secondary:#cbd5e1; --text-muted:#94a3b8; --text-subtle:#64748b;
+    --accent-1:#6366f1; --accent-2:#8b5cf6;
+    --accent-grad:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+    --danger:#f43f5e; --success:#10b981;
+    --shadow-md:0 8px 24px rgba(0,0,0,0.35); --shadow-glow:0 8px 32px rgba(99,102,241,0.25);
+    --radius-md:16px; --radius-pill:999px;
+    --ease:cubic-bezier(0.4,0,0.2,1); --dur:250ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg-base);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh}
+body{background:radial-gradient(ellipse 80% 40% at 50% 0%,rgba(139,92,246,0.12),transparent 60%),var(--bg-base);background-attachment:fixed}
+a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(10,15,30,0.65);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--glass-border)}
+.nav-brand{display:flex;align-items:center;gap:.65rem;font-weight:700;font-size:1.05rem}
+.nav-brand-mark{width:28px;height:28px;border-radius:8px;background:var(--accent-grad);display:grid;place-items:center;font-weight:800;font-size:.9rem;color:#fff}
+.nav-links{display:flex;gap:.4rem}
+.nav-link{padding:.5rem .95rem;font-size:.875rem;font-weight:500;color:var(--text-muted);border-radius:var(--radius-pill);transition:all var(--dur) var(--ease)}
+.nav-link:hover,.nav-link.active{color:var(--text-primary);background:var(--glass-bg)}
+.nav-right{display:flex;align-items:center;gap:.75rem;position:relative}
+.nav-icon-btn{width:38px;height:38px;display:grid;place-items:center;border-radius:var(--radius-pill);color:var(--text-muted);transition:all var(--dur) var(--ease);position:relative}
+.nav-icon-btn:hover{background:var(--glass-bg);color:var(--text-primary)}
+.nav-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--accent-2);box-shadow:0 0 8px var(--accent-2)}
+
+/* Hero */
+.hero{max-width:1180px;margin:0 auto;padding:4rem 2.5rem 2rem;text-align:center}
+.avatar-xl{width:120px;height:120px;border-radius:50%;background:var(--accent-grad);display:grid;place-items:center;margin:0 auto 1.25rem;font-size:3rem;font-weight:700;color:#fff;box-shadow:var(--shadow-glow);cursor:pointer;border:3px solid var(--bg-base);outline:1px solid var(--glass-strong);position:relative;overflow:hidden}
+.avatar-xl img{width:100%;height:100%;object-fit:cover}
+.avatar-xl .edit-hint{position:absolute;inset:0;background:rgba(0,0,0,0.5);display:grid;place-items:center;opacity:0;transition:opacity var(--dur) var(--ease)}
+.avatar-xl:hover .edit-hint{opacity:1}
+.username{font-size:2.4rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.4rem}
+.handle{color:var(--text-muted);font-size:.95rem;margin-bottom:.4rem}
+.bio{font-family:'Newsreader',serif;font-style:italic;color:var(--text-secondary);font-size:1.1rem;max-width:520px;margin:0 auto 2rem;text-wrap:balance}
+
+.stats-row{display:flex;justify-content:center;gap:3rem;margin-bottom:2rem;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;align-items:center;gap:.25rem}
+.stat .num{font-size:1.6rem;font-weight:700;letter-spacing:-.015em;font-variant-numeric:tabular-nums}
+.stat .lbl{font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+
+.hero-actions{display:flex;justify-content:center;gap:.5rem;margin-bottom:1rem}
+.btn-ghost{padding:.55rem 1.2rem;font-size:.85rem;font-weight:500;color:var(--text-muted);background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius-pill);transition:all var(--dur) var(--ease)}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--glass-strong)}
+.btn-primary{padding:.55rem 1.4rem;font-size:.85rem;font-weight:600;border-radius:var(--radius-pill);background:var(--accent-grad);color:#fff;transition:all var(--dur) var(--ease)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-glow)}
+
+/* Tabs */
+.tabs-wrap{max-width:1180px;margin:0 auto;padding:0 2.5rem;border-bottom:1px solid var(--glass-border);display:flex;gap:.4rem}
+.tab{padding:1rem 1.4rem;font-size:.9rem;font-weight:500;color:var(--text-muted);border-bottom:2px solid transparent;transition:all var(--dur) var(--ease);position:relative;top:1px}
+.tab:hover{color:var(--text-secondary)}
+.tab.active{color:var(--text-primary);border-bottom-color:var(--accent-2)}
+.tab .count{margin-left:.4rem;font-size:.78rem;color:var(--text-subtle);font-variant-numeric:tabular-nums}
+
+/* Tab content */
+.panel-wrap{max-width:1180px;margin:0 auto;padding:2.5rem 2.5rem 6rem}
+.panel{display:none}
+.panel.active{display:block}
+
+.entry{display:grid;grid-template-columns:1fr auto;gap:1.5rem;padding:1.5rem 0;border-bottom:1px solid var(--glass-border);transition:all var(--dur) var(--ease);align-items:center}
+.entry:hover{padding-left:.5rem}
+.entry-body{min-width:0}
+.entry h4{font-size:1.15rem;font-weight:600;letter-spacing:-.015em;margin-bottom:.4rem}
+.entry p{color:var(--text-muted);font-size:.92rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.65rem}
+.entry-meta{display:flex;align-items:center;gap:1rem;font-size:.78rem;color:var(--text-subtle)}
+.entry-meta .stat{display:inline-flex;align-items:center;gap:.3rem;flex-direction:row;font-size:.78rem}
+.entry-actions{display:flex;gap:.4rem;flex-shrink:0}
+.entry-actions button,.entry-actions a{padding:.45rem .9rem;font-size:.78rem;font-weight:500;border-radius:var(--radius-pill);transition:all var(--dur) var(--ease)}
+.entry-actions .b-edit{background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-secondary)}
+.entry-actions .b-edit:hover{background:var(--glass-hover);color:var(--text-primary)}
+.entry-actions .b-del{background:transparent;border:1px solid transparent;color:var(--text-subtle)}
+.entry-actions .b-del:hover{color:var(--danger);border-color:rgba(244,63,94,.3)}
+
+.empty{text-align:center;padding:4rem 2rem}
+.empty-ico{width:64px;height:64px;margin:0 auto 1.25rem;border-radius:50%;background:var(--glass-bg);border:1px solid var(--glass-border);display:grid;place-items:center;color:var(--accent-2)}
+.empty h3{font-family:'Newsreader',serif;font-style:italic;font-weight:500;font-size:1.6rem;color:var(--text-primary);margin-bottom:.5rem}
+.empty p{color:var(--text-muted);margin-bottom:1.5rem}
+
+/* Edit modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(5,8,18,.7);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:2rem}
+.modal-backdrop.open{display:flex}
+.modal{width:100%;max-width:480px;background:var(--bg-elevated);border:1px solid var(--glass-strong);border-radius:20px;padding:2rem}
+.modal h2{font-size:1.3rem;font-weight:600;margin-bottom:1.5rem;letter-spacing:-.015em}
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:.78rem;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem}
+.field input{width:100%;background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-primary);padding:.85rem 1rem;border-radius:12px;font-size:.95rem;transition:border-color var(--dur) var(--ease)}
+.field input:focus{outline:none;border-color:rgba(139,92,246,.5);box-shadow:0 0 0 4px rgba(139,92,246,.1)}
+.modal-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:1.5rem}
+
+/* Notification dropdown */
+.notif-pop{position:absolute;top:48px;right:0;width:380px;max-height:480px;overflow-y:auto;background:var(--bg-elevated);border:1px solid var(--glass-strong);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.5);display:none;z-index:60}
+.notif-pop.open{display:block}
+.notif-head{padding:1rem 1.25rem;font-size:.95rem;font-weight:600;border-bottom:1px solid var(--glass-border)}
+.notif-item{display:flex;gap:.75rem;padding:.85rem 1.25rem;border-bottom:1px solid var(--glass-border);transition:background var(--dur) var(--ease);cursor:pointer}
+.notif-item:hover{background:var(--glass-bg)}
+.notif-item.unread{background:rgba(99,102,241,.08)}
+.notif-ico{width:36px;height:36px;border-radius:50%;background:var(--glass-strong);display:grid;place-items:center;flex-shrink:0;color:var(--accent-2)}
+.notif-body{flex:1;min-width:0}
+.notif-text{font-size:.88rem;line-height:1.45}
+.notif-text strong{font-weight:600}
+.notif-when{font-size:.74rem;color:var(--text-subtle);margin-top:.2rem}
+
+@media(max-width:760px){.nav-links{display:none}.tabs-wrap{padding:0 1.25rem;overflow-x:auto;-webkit-overflow-scrolling:touch}.panel-wrap,.hero{padding-left:1.25rem;padding-right:1.25rem}.entry{grid-template-columns:1fr}.entry-actions{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<nav class="nav">
+    <div class="nav-brand"><div class="nav-brand-mark">L</div><span>Lumen</span></div>
+    <div class="nav-links">
+        <a class="nav-link" href="dashboard.html">Home</a>
+        <a class="nav-link" href="feed.html">Feed</a>
+        <a class="nav-link" href="create-blog.html">Write</a>
+    </div>
+    <div class="nav-right">
+        <button class="nav-icon-btn" onclick="toggleNotifs(event)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span class="nav-badge"></span>
+        </button>
+        <div class="notif-pop" id="notifPop">
+            <div class="notif-head">Notifications</div>
+            <div class="notif-item unread"><div class="notif-ico">❤</div><div class="notif-body"><div class="notif-text"><strong>Iris Chen</strong> liked your story <em>“On finishing things”</em></div><div class="notif-when">2h ago</div></div></div>
+            <div class="notif-item unread"><div class="notif-ico">💬</div><div class="notif-body"><div class="notif-text"><strong>Theo Vance</strong> commented on <em>“The quiet revolution”</em></div><div class="notif-when">5h ago</div></div></div>
+            <div class="notif-item"><div class="notif-ico">＋</div><div class="notif-body"><div class="notif-text"><strong>Daniel Okafor</strong> started following you</div><div class="notif-when">1d ago</div></div></div>
+        </div>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="avatar-xl" onclick="document.getElementById('avatarInput').click()">
+        <span id="avatarInitial">M</span>
+        <div class="edit-hint">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-9A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20h11a2.5 2.5 0 0 0 2.5-2.5v-7"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.5 9.5 14 10l.5-3.5z"/></svg>
+        </div>
+        <input type="file" accept="image/*" id="avatarInput" style="display:none" onchange="onAvatar(this)">
+    </div>
+    <h1 class="username" id="displayUsername">Maya Lin</h1>
+    <p class="handle" id="displayEmail">maya@lumen.co · Member since April 2024</p>
+    <p class="bio">Designing tools for thinking, slowly. Reader, writer, occasional gardener.</p>
+
+    <div class="stats-row">
+        <div class="stat"><div class="num">14</div><div class="lbl">Stories</div></div>
+        <div class="stat"><div class="num">1,284</div><div class="lbl">Followers</div></div>
+        <div class="stat"><div class="num">312</div><div class="lbl">Following</div></div>
+        <div class="stat"><div class="num">8.2k</div><div class="lbl">Total likes</div></div>
+    </div>
+
+    <div class="hero-actions">
+        <button class="btn-ghost" onclick="openModal('editProfile')">Edit profile</button>
+        <button class="btn-ghost" onclick="openModal('changePassword')">Change password</button>
+        <a class="btn-ghost" href="/api/auth/logout">Sign out</a>
+    </div>
+</header>
+
+<!-- Tabs -->
+<div class="tabs-wrap">
+    <button class="tab active" data-tab="published">Published<span class="count">14</span></button>
+    <button class="tab" data-tab="drafts">Drafts<span class="count">3</span></button>
+    <button class="tab" data-tab="liked">Liked<span class="count">42</span></button>
+    <button class="tab" data-tab="saved">Saved<span class="count">18</span></button>
+</div>
+
+<div class="panel-wrap">
+    <div class="panel active" id="panel-published">
+        <div class="entry">
+            <div class="entry-body">
+                <h4>The quiet revolution of small interfaces</h4>
+                <p>For a decade we treated software as territory to be conquered with density and chrome. The new craft is restraint — interfaces that breathe, that whisper.</p>
+                <div class="entry-meta"><span>Apr 22, 2026</span><span class="stat">❤ 248</span><span class="stat">💬 31</span></div>
+            </div>
+            <div class="entry-actions"><a class="b-edit" href="create-blog.html?draft_id=1">Edit</a><button class="b-del">Delete</button></div>
+        </div>
+        <div class="entry">
+            <div class="entry-body">
+                <h4>On finishing things</h4>
+                <p>I have eleven half-built projects in a folder called “later.” This is an essay about why “later” is the most expensive word in the English language.</p>
+                <div class="entry-meta"><span>Apr 12, 2026</span><span class="stat">❤ 891</span><span class="stat">💬 142</span></div>
+            </div>
+            <div class="entry-actions"><a class="b-edit" href="create-blog.html?draft_id=2">Edit</a><button class="b-del">Delete</button></div>
+        </div>
+        <div class="entry">
+            <div class="entry-body">
+                <h4>Notes from a year without notifications</h4>
+                <p>I turned off every push for 365 days. Here’s what I lost, what I gained, and what I learned about my own attention.</p>
+                <div class="entry-meta"><span>Mar 28, 2026</span><span class="stat">❤ 1.1k</span><span class="stat">💬 203</span></div>
+            </div>
+            <div class="entry-actions"><a class="b-edit" href="create-blog.html?draft_id=3">Edit</a><button class="b-del">Delete</button></div>
+        </div>
+    </div>
+    <div class="panel" id="panel-drafts">
+        <div class="entry">
+            <div class="entry-body">
+                <h4>Why slow software is winning</h4>
+                <p>A draft about the quiet renaissance of unhurried tools and what they teach us about attention.</p>
+                <div class="entry-meta"><span>Edited yesterday</span><span class="stat">1,240 words</span></div>
+            </div>
+            <div class="entry-actions"><a class="b-edit" href="create-blog.html?draft_id=d1">Continue</a><button class="b-del">Delete</button></div>
+        </div>
+        <div class="entry">
+            <div class="entry-body">
+                <h4>Untitled</h4>
+                <p>An empty notebook with a single opening line — the most exciting and most terrifying first sentence I’ve written in a year.</p>
+                <div class="entry-meta"><span>Edited 3 days ago</span><span class="stat">320 words</span></div>
+            </div>
+            <div class="entry-actions"><a class="b-edit" href="create-blog.html?draft_id=d2">Continue</a><button class="b-del">Delete</button></div>
+        </div>
+    </div>
+    <div class="panel" id="panel-liked">
+        <div class="entry">
+            <div class="entry-body">
+                <h4>Why your model needs a smaller mind</h4>
+                <p>Not every problem demands a 70B-parameter answer. The most interesting work I’ve seen comes from teams who chose less.</p>
+                <div class="entry-meta"><span>by Theo Vance</span><span>Apr 20, 2026</span><span class="stat">❤ 412</span></div>
+            </div>
+        </div>
+        <div class="entry">
+            <div class="entry-body">
+                <h4>A grammar for system design interviews</h4>
+                <p>Most candidates fail not because they don’t know the answer, but because they can’t structure the conversation.</p>
+                <div class="entry-meta"><span>by Hassan Mirza</span><span>Apr 10, 2026</span><span class="stat">❤ 556</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="panel" id="panel-saved">
+        <div class="empty">
+            <div class="empty-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></div>
+            <h3>Nothing saved yet</h3>
+            <p>Tap the bookmark icon on any story to keep it here.</p>
+            <a class="btn-primary" href="feed.html">Browse the feed</a>
+        </div>
+    </div>
+</div>
+
+<!-- Edit profile modal -->
+<div class="modal-backdrop" id="modal-editProfile">
+    <div class="modal">
+        <h2>Edit profile</h2>
+        <div class="field"><label>Username</label><input type="text" id="editUsername" value="Maya Lin"></div>
+        <div class="field"><label>Email</label><input type="email" id="editEmail" value="maya@lumen.co"></div>
+        <div class="modal-actions">
+            <button class="btn-ghost" onclick="closeModal('editProfile')">Cancel</button>
+            <button class="btn-primary" onclick="saveProfile()">Save changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Change password modal -->
+<div class="modal-backdrop" id="modal-changePassword">
+    <div class="modal">
+        <h2>Change password</h2>
+        <div class="field"><label>Current password</label><input type="password"></div>
+        <div class="field"><label>New password</label><input type="password"></div>
+        <div class="field"><label>Confirm new password</label><input type="password"></div>
+        <div class="modal-actions">
+            <button class="btn-ghost" onclick="closeModal('changePassword')">Cancel</button>
+            <button class="btn-primary" onclick="closeModal('changePassword')">Update password</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+}));
+
+// Modals
+function openModal(id){ document.getElementById('modal-'+id).classList.add('open'); }
+function closeModal(id){ document.getElementById('modal-'+id).classList.remove('open'); }
+document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{ if(e.target===b) b.classList.remove('open'); }));
+
+function saveProfile(){
+    document.getElementById('displayUsername').textContent=document.getElementById('editUsername').value;
+    closeModal('editProfile');
+}
+
+// Notifications
+function toggleNotifs(e){ e.stopPropagation(); document.getElementById('notifPop').classList.toggle('open'); }
+document.addEventListener('click',()=>document.getElementById('notifPop').classList.remove('open'));
+
+// Avatar (preview only)
+function onAvatar(input){
+    if(!input.files||!input.files[0]) return;
+    const url=URL.createObjectURL(input.files[0]);
+    const wrap=document.querySelector('.avatar-xl');
+    wrap.innerHTML = '<img src="'+url+'" alt="avatar"><div class="edit-hint"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-9A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20h11a2.5 2.5 0 0 0 2.5-2.5v-7"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.5 9.5 14 10l.5-3.5z"/></svg></div>';
+}
+</script>
+</body>
+</html>

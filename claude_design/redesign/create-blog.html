@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Story — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#0e0c0b; --surface:#1a1714; --surface-2:#221d19;
+    --border:#2e2a27; --border-bright:#3d3630;
+    --text:#d4cdc7; --text-strong:#ece5df; --muted:#7a736d; --subtle:#5a534d;
+    --accent:#e8845c; --accent-soft:rgba(232,132,92,.10); --accent-press:#d97249;
+    --gold:#c9a96e; --gold-soft:rgba(201,169,110,.12);
+    --danger:#e05c5c; --success:#7fb069; --warn:#f59e0b;
+    --shadow-md:0 8px 24px rgba(0,0,0,0.35); --shadow-glow:0 8px 32px rgba(232,132,92,.2);
+    --r-sm:6px; --r:8px; --r-md:12px; --r-pill:999px;
+    --ease:cubic-bezier(.4,0,.2,1); --dur:200ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text-strong);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh}
+a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;background:rgba(14,12,11,.92);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--border)}
+.nav-left{display:flex;align-items:center;gap:1rem}
+.nav-brand{display:flex;align-items:center;gap:.65rem;font-weight:700;font-size:1.05rem}
+.nav-brand-mark{width:28px;height:28px;border-radius:var(--r);background:var(--accent);display:grid;place-items:center;font-weight:800;font-size:.9rem;color:#fff}
+.nav-divider{width:1px;height:22px;background:var(--border)}
+.nav-context{font-size:.875rem;color:var(--muted)}
+.save-status{display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--subtle);font-variant-numeric:tabular-nums}
+.save-status .dot{width:6px;height:6px;border-radius:50%;background:var(--subtle)}
+.save-status.saving .dot{background:var(--warn);animation:pulse 1.2s infinite}
+.save-status.saved .dot{background:var(--success)}
+.save-status.error .dot{background:var(--danger)}
+@keyframes pulse{50%{opacity:.4}}
+.nav-right{display:flex;align-items:center;gap:.6rem}
+.btn-ghost{padding:.55rem 1.05rem;font-size:.85rem;font-weight:500;color:var(--muted);border-radius:var(--r-pill);transition:all var(--dur) var(--ease)}
+.btn-ghost:hover{color:var(--text-strong);background:var(--surface-2)}
+.btn-primary{padding:.55rem 1.4rem;font-size:.85rem;font-weight:600;border-radius:var(--r-pill);background:var(--accent);color:#fff;transition:all var(--dur) var(--ease)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-glow);background:var(--accent-press)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* Editor */
+.editor-wrap{max-width:760px;margin:0 auto;padding:4rem 2rem 6rem}
+.draft-banner{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.2);border-radius:var(--r-md);margin-bottom:2rem}
+.draft-banner-ico{width:36px;height:36px;border-radius:50%;background:rgba(201,169,110,.12);color:var(--gold);display:grid;place-items:center;flex-shrink:0}
+.draft-banner-body{flex:1;min-width:0}
+.draft-banner-body strong{font-size:.92rem}
+.draft-banner-body p{font-size:.82rem;color:var(--muted);margin-top:.15rem}
+.draft-banner-actions{display:flex;gap:.5rem}
+
+#title{
+    width:100%;background:transparent;border:none;outline:none;
+    color:var(--text-strong);
+    font-size:clamp(2rem,5vw,3rem);font-weight:700;letter-spacing:-.025em;line-height:1.15;
+    padding:.5rem 0;margin-bottom:1rem;
+    font-family:inherit;
+}
+#title::placeholder{color:var(--subtle)}
+
+.content-editor{
+    min-height:60vh;
+    background:transparent;border:none;outline:none;
+    color:var(--text);
+    font-family:'Newsreader',serif;
+    font-size:1.18rem;line-height:1.8;
+    padding:.5rem 0;
+    word-wrap:break-word;
+}
+.content-editor:empty::before{content:attr(data-placeholder);color:var(--subtle);pointer-events:none;font-style:italic}
+.content-editor img{max-width:100%;border-radius:var(--r-md);margin:.5rem 0;border:1px solid var(--border)}
+.content-editor p{margin-bottom:1.5rem}
+
+.editor-foot{display:flex;align-items:center;justify-content:space-between;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:.82rem;color:var(--subtle)}
+.foot-left{display:flex;gap:1.5rem}
+.foot-tip{display:inline-flex;align-items:center;gap:.4rem}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(120%);background:var(--surface-2);border:1px solid var(--border-bright);color:var(--text-strong);padding:.85rem 1.4rem;border-radius:var(--r-pill);font-size:.9rem;box-shadow:var(--shadow-md);transition:transform 350ms var(--ease);z-index:100;display:flex;align-items:center;gap:.5rem}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.success .ico{color:var(--success)}
+.toast.error .ico{color:var(--danger)}
+
+/* Version sidebar */
+.sidebar{position:fixed;top:0;right:-380px;width:360px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:200;transition:right 300ms var(--ease);display:flex;flex-direction:column}
+.sidebar.open{right:0}
+.sidebar-head{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sidebar-head h3{font-size:1rem;font-weight:600}
+.sidebar-close{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted);transition:all var(--dur) var(--ease)}
+.sidebar-close:hover{background:var(--surface-2);color:var(--text-strong)}
+.sidebar-body{flex:1;overflow-y:auto;padding:1rem 1.25rem}
+.version-item{padding:1rem;border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer;transition:all var(--dur) var(--ease)}
+.version-item:hover{background:var(--surface-2);border-color:var(--border-bright)}
+.version-num{font-size:.92rem;font-weight:600;color:var(--accent);margin-bottom:.15rem}
+.version-date{font-size:.78rem;color:var(--muted)}
+
+@media(max-width:760px){.editor-wrap{padding:2rem 1.25rem 5rem}.nav{padding:.85rem 1.25rem}.nav-context{display:none}.sidebar{width:100%;right:-100%}}
+</style>
+</head>
+<body>
+<nav class="nav">
+    <div class="nav-left">
+        <div class="nav-brand"><div class="nav-brand-mark">L</div><span>Lumen</span></div>
+        <div class="nav-divider"></div>
+        <div class="nav-context">New story</div>
+        <div class="save-status saved" id="saveStatus"><span class="dot"></span><span id="saveText">Saved</span></div>
+    </div>
+    <div class="nav-right">
+        <button class="btn-ghost" id="historyBtn" onclick="document.getElementById('versionSidebar').classList.add('open')" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+            History
+        </button>
+        <button class="btn-ghost" onclick="saveDraft(true)">Save draft</button>
+        <button class="btn-primary" id="publishBtn" onclick="publish()">Publish</button>
+    </div>
+</nav>
+
+<div class="editor-wrap">
+    <div class="draft-banner" id="draftBanner" style="display:none">
+        <div class="draft-banner-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10l4 2"/><circle cx="12" cy="12" r="10"/></svg></div>
+        <div class="draft-banner-body">
+            <strong>You have an unsaved draft</strong>
+            <p id="draftBannerText">"Why slow software is winning" · last edited yesterday</p>
+        </div>
+        <div class="draft-banner-actions">
+            <button class="btn-ghost" onclick="dismissDraft()">Dismiss</button>
+            <button class="btn-primary" onclick="resumeDraft()">Resume</button>
+        </div>
+    </div>
+
+    <input id="title" type="text" placeholder="Title" />
+    <div id="content" class="content-editor" contenteditable="true" data-placeholder="Tell your story…"></div>
+
+    <div class="editor-foot">
+        <div class="foot-left">
+            <span class="foot-tip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Paste images directly</span>
+            <span class="foot-tip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg> Autosaves every 2s</span>
+        </div>
+        <span id="wordCount">0 words</span>
+    </div>
+</div>
+
+<!-- Sidebar: version history -->
+<aside class="sidebar" id="versionSidebar">
+    <div class="sidebar-head">
+        <h3>Version history</h3>
+        <button class="sidebar-close" onclick="document.getElementById('versionSidebar').classList.remove('open')">×</button>
+    </div>
+    <div class="sidebar-body" id="versionList">
+        <p style="color:var(--muted);font-size:.88rem">Save a checkpoint to start tracking versions.</p>
+    </div>
+</aside>
+
+<div class="toast" id="toast"><span class="ico">✓</span><span id="toastMsg">Draft saved</span></div>
+
+<script>
+let currentBlogId=null, currentVersion=0, saveTimer=null, isSaving=false, pendingDraft=null;
+const titleEl=document.getElementById('title'), contentEl=document.getElementById('content');
+const statusEl=document.getElementById('saveStatus'), statusText=document.getElementById('saveText');
+
+function updateStatus(state, text){
+    statusEl.className='save-status '+state;
+    statusText.textContent=text;
+}
+function toast(msg, kind='success'){
+    const t=document.getElementById('toast');
+    t.className='toast '+kind+' show';
+    t.querySelector('.ico').textContent = kind==='error'?'!':'✓';
+    document.getElementById('toastMsg').textContent=msg;
+    clearTimeout(toast._t);
+    toast._t=setTimeout(()=>t.classList.remove('show'),2500);
+}
+function updateWordCount(){
+    const text=(contentEl.innerText||'').trim();
+    const n = text ? text.split(/\s+/).length : 0;
+    document.getElementById('wordCount').textContent = n + (n===1?' word':' words');
+}
+
+function scheduleAutoSave(){
+    clearTimeout(saveTimer);
+    updateStatus('saving','Saving…');
+    saveTimer=setTimeout(()=>saveDraft(false),2000);
+    updateWordCount();
+}
+
+async function saveDraft(createVersion){
+    const title=titleEl.value.trim(), content=contentEl.innerHTML.trim();
+    if(!title && !content) return;
+    if(isSaving) return;
+    isSaving=true;
+    updateStatus('saving', createVersion?'Creating checkpoint…':'Saving…');
+    try{
+        const r=await fetch('/api/blogs/save-draft',{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({blog_id:currentBlogId, title, content, create_version:createVersion})
+        });
+        const d=await r.json();
+        if(r.ok){
+            currentBlogId=d.blog_id;
+            currentVersion=d.version_number;
+            document.getElementById('historyBtn').style.display='inline-block';
+            if(d.is_new_version){ updateStatus('saved','Version '+d.version_number+' saved'); toast('Checkpoint v'+d.version_number+' created'); }
+            else { updateStatus('saved','Saved'); }
+        } else { updateStatus('error','Save failed'); }
+    } catch(e){
+        // Offline / mock mode
+        updateStatus('saved','Saved locally');
+    } finally { isSaving=false; }
+}
+
+async function publish(){
+    const t=titleEl.value.trim(), c=contentEl.innerHTML.trim();
+    if(!t || !c){ toast('Title and content are required','error'); return; }
+    document.getElementById('publishBtn').disabled=true;
+    await saveDraft(false);
+    try{
+        const r=await fetch('/api/blogs/publish/'+(currentBlogId||'mock'),{method:'POST',headers:{'Content-Type':'application/json'}});
+        if(r.ok){ toast('Published — your story is live'); titleEl.value=''; contentEl.innerHTML=''; currentBlogId=null; updateStatus('saved','Saved'); }
+        else { toast('Publish failed','error'); }
+    } catch(e){ toast('Published (mock mode)'); }
+    document.getElementById('publishBtn').disabled=false;
+}
+
+titleEl.addEventListener('input', scheduleAutoSave);
+contentEl.addEventListener('input', scheduleAutoSave);
+
+contentEl.addEventListener('paste', e=>{
+    const items = e.clipboardData && e.clipboardData.items;
+    if(!items) return;
+    for(const item of items){
+        if(item.type.startsWith('image/')){
+            e.preventDefault();
+            const file=item.getAsFile(), reader=new FileReader();
+            reader.onload=ev=>{
+                const img=document.createElement('img');
+                img.src=ev.target.result;
+                const sel=window.getSelection();
+                if(sel && sel.rangeCount){
+                    const r=sel.getRangeAt(0); r.deleteContents(); r.insertNode(img); r.setStartAfter(img); r.collapse(true); sel.removeAllRanges(); sel.addRange(r);
+                } else contentEl.appendChild(img);
+                scheduleAutoSave();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+// Mock draft banner for demo
+async function checkDrafts(){
+    try{
+        const r=await fetch('/api/blogs/my-drafts');
+        const d=await r.json();
+        if(r.ok && d.drafts && d.drafts.length){
+            pendingDraft=d.drafts[0];
+            document.getElementById('draftBanner').style.display='flex';
+            document.getElementById('draftBannerText').textContent='"'+(pendingDraft.title||'Untitled')+'" · last edited '+new Date(pendingDraft.updated_at||pendingDraft.created_at).toLocaleDateString();
+        }
+    } catch(e){
+        // demo banner
+        pendingDraft={blog_id:'demo', title:'Why slow software is winning', content:'<p>Some opening lines about restraint…</p>'};
+        document.getElementById('draftBanner').style.display='flex';
+    }
+}
+function resumeDraft(){
+    if(!pendingDraft) return;
+    currentBlogId=pendingDraft.blog_id;
+    titleEl.value=pendingDraft.title||'';
+    contentEl.innerHTML=pendingDraft.content||'';
+    document.getElementById('draftBanner').style.display='none';
+    document.getElementById('historyBtn').style.display='inline-block';
+    updateWordCount();
+    updateStatus('saved','Draft loaded');
+}
+function dismissDraft(){ pendingDraft=null; document.getElementById('draftBanner').style.display='none'; }
+checkDrafts();
+updateWordCount();
+</script>
+</body>
+</html>

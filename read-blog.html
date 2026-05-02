@@ -1,266 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading Blog</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reading — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#0e0c0b; --surface:#1a1714; --surface-2:#221d19;
+    --border:#2e2a27; --border-bright:#3d3630;
+    --text:#d4cdc7; --text-strong:#ece5df; --muted:#7a736d; --subtle:#5a534d;
+    --accent:#e8845c; --accent-soft:rgba(232,132,92,.10); --accent-press:#d97249;
+    --gold:#c9a96e;
+    --danger:#e05c5c; --success:#7fb069;
+    --r-sm:6px; --r:8px; --r-md:12px; --r-pill:999px;
+    --ease:cubic-bezier(.4,0,.2,1); --dur:200ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text-strong);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh}
+a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0f0f1a;
-            color: #e2e8f0;
-            min-height: 100vh;
-        }
+/* Nav */
+.top-bar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:rgba(14,12,11,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-back{display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;color:var(--muted);padding:.5rem .95rem;border-radius:var(--r-pill);transition:all var(--dur) var(--ease)}
+.nav-back:hover{color:var(--text-strong);background:var(--surface-2)}
+.nav-profile{display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;color:var(--muted);padding:.5rem .95rem;border-radius:var(--r-pill);transition:all var(--dur) var(--ease)}
+.nav-profile:hover{color:var(--text-strong);background:var(--surface-2)}
 
-        /* ── Top nav ── */
-        .top-bar {
-            position: sticky; top: 0; z-index: 100;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 1rem 2rem;
-            background: rgba(15,15,26,0.85);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .top-bar a {
-            color: #a78bfa; text-decoration: none; font-weight: 600;
-            display: flex; align-items: center; gap: .4rem;
-            transition: color .2s;
-        }
-        .top-bar a:hover { color: #c4b5fd; }
+/* Article */
+.article-wrapper{max-width:760px;margin:0 auto;padding:3rem 2rem 8rem}
 
-        /* ── Article wrapper ── */
-        .article-wrapper {
-            max-width: 760px;
-            margin: 0 auto;
-            padding: 3rem 2rem 6rem;
-        }
+.meta{display:flex;align-items:center;gap:1rem;margin-bottom:2rem;flex-wrap:wrap}
+.avatar{width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;color:#fff;flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.meta-text{display:flex;flex-direction:column}
+.meta-author{font-weight:600;font-size:1rem;color:var(--text-strong);cursor:pointer;transition:color var(--dur) var(--ease)}
+.meta-author:hover{color:var(--accent)}
+.meta-date{font-size:.85rem;color:var(--muted)}
 
-        /* ── Meta header ── */
-        .meta {
-            display: flex; align-items: center; gap: 1rem;
-            margin-bottom: 2rem; flex-wrap: wrap;
-        }
-        .avatar {
-            width: 48px; height: 48px; border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 1.2rem; color: #fff;
-            flex-shrink: 0;
-        }
-        .meta-text { display: flex; flex-direction: column; }
-        .meta-author { font-weight: 600; font-size: 1rem; color: #f1f5f9; }
-        .meta-date { font-size: .85rem; color: #94a3b8; }
+.article-title{font-family:'Newsreader',serif;font-size:2.6rem;font-weight:700;line-height:1.3;color:var(--text-strong);margin-bottom:2.5rem;letter-spacing:-.01em}
 
-        /* ── Title ── */
-        .article-title {
-            font-family: 'Merriweather', serif;
-            font-size: 2.6rem;
-            font-weight: 700;
-            line-height: 1.3;
-            color: #f8fafc;
-            margin-bottom: 2.5rem;
-        }
+.article-content{font-family:'Newsreader',serif;font-size:1.15rem;line-height:1.9;color:var(--text);white-space:pre-wrap;word-wrap:break-word}
+.article-content p{margin-bottom:1.5rem}
+.article-content img{max-width:100%;border-radius:var(--r-md);margin:.5rem 0;border:1px solid var(--border)}
 
-        /* ── Content ── */
-        .article-content {
-            font-family: 'Merriweather', serif;
-            font-size: 1.15rem;
-            line-height: 1.9;
-            color: #cbd5e1;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        .article-content p { margin-bottom: 1.5rem; }
+/* Loading / error */
+.loading-state,.error-state{text-align:center;padding:6rem 2rem;color:var(--muted)}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 1.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-state{color:var(--danger)}
+.error-state h2{margin-bottom:.5rem}
 
-        /* ── Interaction bar ── */
-        .interaction-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            display: flex; align-items: center; justify-content: center; gap: 2rem;
-            padding: 1rem 2rem;
-            background: rgba(15,15,26,0.92);
-            backdrop-filter: blur(16px);
-            border-top: 1px solid rgba(255,255,255,0.06);
-            z-index: 100;
-        }
-        .action-btn {
-            display: flex; align-items: center; gap: .5rem;
-            background: none; border: none; color: #94a3b8;
-            font-size: 1rem; font-weight: 500; cursor: pointer;
-            padding: .6rem 1.2rem; border-radius: 999px;
-            transition: all .25s;
-        }
-        .action-btn:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
-        .action-btn.liked { color: #f43f5e; }
-        .action-btn.liked:hover { background: rgba(244,63,94,0.1); }
-        .action-btn .icon { font-size: 1.3rem; }
+/* Interaction bar */
+.interaction-bar{position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:2rem;padding:1rem 2rem;background:rgba(14,12,11,.95);backdrop-filter:blur(16px);border-top:1px solid var(--border);z-index:100}
+.action-btn{display:flex;align-items:center;gap:.5rem;background:none;border:none;color:var(--muted);font-size:1rem;font-weight:500;cursor:pointer;padding:.6rem 1.2rem;border-radius:var(--r-pill);transition:all var(--dur) var(--ease)}
+.action-btn:hover{background:var(--surface-2);color:var(--text-strong)}
+.action-btn.liked{color:var(--danger)}
+.action-btn.liked:hover{background:rgba(224,92,92,.1)}
+.action-btn.saved{color:var(--gold)}
+.action-btn .icon{font-size:1.3rem}
 
-        /* ── Loading / Error ── */
-        .loading-state, .error-state {
-            text-align: center; padding: 6rem 2rem;
-        }
-        .spinner {
-            width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: #a78bfa; border-radius: 50%;
-            animation: spin .7s linear infinite; margin: 0 auto 1.5rem;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .error-state { color: #f87171; }
-        .error-state h2 { margin-bottom: .5rem; }
+/* Comments */
+.comments-section{margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border)}
+.comments-heading{font-size:1.4rem;font-weight:600;color:var(--text-strong);margin-bottom:1.5rem}
 
-        /* ── Fade‐in ── */
-        .fade-in { animation: fadeIn .6s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.comment-input-wrapper{display:flex;gap:.75rem;align-items:flex-end;margin-bottom:2rem}
+.comment-input-wrapper textarea{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:.85rem 1rem;color:var(--text-strong);font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;resize:vertical;min-height:56px;transition:border-color var(--dur) var(--ease)}
+.comment-input-wrapper textarea:focus{outline:none;border-color:var(--accent)}
+.comment-post-btn{padding:.7rem 1.4rem;background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);font-weight:600;font-size:.9rem;cursor:pointer;transition:all var(--dur) var(--ease);white-space:nowrap}
+.comment-post-btn:hover{background:var(--accent-press);transform:translateY(-1px)}
+.comment-post-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-        @media (max-width: 600px) {
-            .article-wrapper { padding: 2rem 1.2rem 5rem; }
-            .article-title { font-size: 1.8rem; }
-            .article-content { font-size: 1rem; }
-        }
+.comment-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:1rem 1.2rem;margin-bottom:.75rem;transition:border-color var(--dur) var(--ease)}
+.comment-card:hover{border-color:var(--border-bright)}
+.comment-header{display:flex;align-items:center;gap:.65rem;margin-bottom:.5rem}
+.comment-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff;flex-shrink:0}
+.comment-meta{display:flex;flex-direction:column;flex:1}
+.comment-username{font-weight:600;font-size:.9rem;color:var(--text-strong)}
+.comment-date{font-size:.75rem;color:var(--subtle)}
+.comment-text{font-size:.95rem;line-height:1.6;color:var(--text);margin:0}
+.comment-delete-btn{background:none;border:none;color:var(--subtle);cursor:pointer;font-size:.9rem;padding:.2rem .5rem;border-radius:var(--r-sm);transition:all var(--dur) var(--ease);margin-left:auto}
+.comment-delete-btn:hover{color:var(--danger);background:rgba(224,92,92,.1)}
+.no-comments{color:var(--muted);font-style:italic;text-align:center;padding:2rem 0}
 
-        /* ── Comments Section ── */
-        .comments-section {
-            margin-top: 3rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255,255,255,0.08);
-        }
-        .comments-heading {
-            font-family: 'Inter', sans-serif;
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: #f1f5f9;
-            margin-bottom: 1.5rem;
-        }
+.comment-new{animation:slideIn .4s ease-out}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .6s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
-        /* ── Comment input ── */
-        .comment-input-wrapper {
-            display: flex;
-            gap: .75rem;
-            align-items: flex-end;
-            margin-bottom: 2rem;
-        }
-        .comment-input-wrapper textarea {
-            flex: 1;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: .85rem 1rem;
-            color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
-            font-size: .95rem;
-            resize: vertical;
-            min-height: 56px;
-            transition: border-color .2s;
-        }
-        .comment-input-wrapper textarea:focus {
-            outline: none;
-            border-color: #a78bfa;
-        }
-        .comment-post-btn {
-            padding: .7rem 1.4rem;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: .95rem;
-            cursor: pointer;
-            transition: opacity .2s, transform .15s;
-            white-space: nowrap;
-        }
-        .comment-post-btn:hover { opacity: .9; transform: translateY(-1px); }
-        .comment-post-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-
-        /* ── Comment cards ── */
-        .comment-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px;
-            padding: 1rem 1.2rem;
-            margin-bottom: .75rem;
-            transition: background .2s;
-        }
-        .comment-card:hover { background: rgba(255,255,255,0.06); }
-        .comment-header {
-            display: flex;
-            align-items: center;
-            gap: .65rem;
-            margin-bottom: .5rem;
-        }
-        .comment-avatar {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: .8rem; color: #fff;
-            flex-shrink: 0;
-        }
-        .comment-meta { display: flex; flex-direction: column; }
-        .comment-username { font-weight: 600; font-size: .9rem; color: #f1f5f9; }
-        .comment-date { font-size: .75rem; color: #64748b; }
-        .comment-text {
-            font-size: .95rem;
-            line-height: 1.6;
-            color: #cbd5e1;
-            margin: 0;
-        }
-        .no-comments {
-            color: #64748b;
-            font-style: italic;
-            text-align: center;
-            padding: 2rem 0;
-        }
-
-        /* ── New comment slide-in ── */
-        .comment-new {
-            animation: slideIn .4s ease-out;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── Comment delete button ── */
-        .comment-delete-btn {
-            background: none; border: none;
-            color: #64748b; cursor: pointer;
-            font-size: .9rem; padding: .2rem .5rem;
-            border-radius: 6px; margin-left: auto;
-            transition: all .2s;
-        }
-        .comment-delete-btn:hover { color: #f43f5e; background: rgba(244,63,94,0.1); }
-
-        .meta-author:hover { color: #a78bfa; text-decoration: underline; }
-    </style>
+@media(max-width:600px){.article-wrapper{padding:2rem 1.2rem 6rem}.article-title{font-size:1.8rem}.article-content{font-size:1rem}}
+</style>
 </head>
 <body>
 
 <div class="top-bar">
-    <a href="/api/blogs/feed-ui">← Back to Feed</a>
-    <a href="/api/profile">My Profile</a>
+    <a class="nav-back" href="/api/blogs/feed-ui"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Back to Feed</a>
+    <a class="nav-profile" href="/api/profile">My Profile</a>
 </div>
 
-<!-- Loading state -->
 <div class="loading-state" id="loadingState">
     <div class="spinner"></div>
-    <p style="color:#94a3b8;">Loading article…</p>
+    <p>Loading article…</p>
 </div>
 
-<!-- Error state -->
-<div class="error-state" id="errorState" style="display:none;">
-    <h2>😕 Blog not found</h2>
+<div class="error-state" id="errorState" style="display:none">
+    <h2>Blog not found</h2>
     <p>This blog may have been removed or you don't have access.</p>
-    <a href="/api/blogs/feed-ui" style="color:#a78bfa; margin-top:1rem; display:inline-block;">← Go back to Feed</a>
+    <a href="/api/blogs/feed-ui" style="color:var(--accent);margin-top:1rem;display:inline-block">← Go back to Feed</a>
 </div>
 
-<!-- Article -->
-<div class="article-wrapper fade-in" id="articleWrapper" style="display:none;">
+<div class="article-wrapper fade-in" id="articleWrapper" style="display:none">
     <div class="meta">
         <div class="avatar" id="authorAvatar"></div>
         <div class="meta-text">
-            <span class="meta-author" id="authorName" style="cursor:pointer;" onclick="goToAuthor()"></span>
+            <span class="meta-author" id="authorName" onclick="goToAuthor()"></span>
             <span class="meta-date" id="publishDate"></span>
         </div>
     </div>
@@ -268,23 +123,18 @@
     <h1 class="article-title" id="blogTitle"></h1>
     <div class="article-content" id="blogContent"></div>
 
-    <!-- ── Comments Section ── -->
-    <div class="comments-section" id="commentsSection" style="display:none;">
+    <!-- Comments -->
+    <div class="comments-section" id="commentsSection" style="display:none">
         <h2 class="comments-heading">Comments</h2>
-
         <div class="comment-input-wrapper">
             <textarea id="commentInput" placeholder="Write a comment…" rows="3"></textarea>
             <button class="comment-post-btn" id="postCommentBtn" onclick="postComment()">Post</button>
         </div>
-
-        <div class="comments-list" id="commentsList">
-            <!-- comments rendered here -->
-        </div>
+        <div class="comments-list" id="commentsList"></div>
     </div>
 </div>
 
-<!-- Bottom interaction bar -->
-<div class="interaction-bar" id="interactionBar" style="display:none;">
+<div class="interaction-bar" id="interactionBar" style="display:none">
     <button class="action-btn" id="likeBtn" onclick="toggleLike()">
         <span class="icon" id="likeIcon">♡</span>
         <span id="likeCount">0</span>
@@ -293,13 +143,12 @@
         <span class="icon">💬</span>
         <span id="commentCount">0</span>
     </button>
-    <button class="action-btn" id="saveBtn" onclick="toggleSave()">
+    <button class="action-btn" id="saveBtn" onclick="toggleSave()" title="Save">
         <span class="icon" id="saveIcon">🔖</span>
     </button>
 </div>
 
 <script>
-    // ── Extract blog_id from URL ──
     const params = new URLSearchParams(window.location.search);
     const blogId = params.get('id');
 
@@ -310,31 +159,18 @@
     let blogAuthorId = null;
 
     async function loadBlog() {
-        if (!blogId) {
-            showError();
-            return;
-        }
-
+        if (!blogId) { showError(); return; }
         try {
             const res = await fetch(`/api/blogs/read/${blogId}`);
-            if (!res.ok) {
-                showError();
-                return;
-            }
-
+            if (!res.ok) { showError(); return; }
             const blog = await res.json();
 
-            // Populate the page
-            document.title = blog.title + ' — Blog';
+            document.title = blog.title + ' — Lumen';
             document.getElementById('blogTitle').textContent = blog.title;
             document.getElementById('blogContent').textContent = blog.content;
             document.getElementById('authorName').textContent = blog.author;
             document.getElementById('authorAvatar').textContent = blog.author.charAt(0).toUpperCase();
-            document.getElementById('publishDate').textContent = new Date(blog.created_at).toLocaleDateString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            });
-
-            // Likes & comments counts
+            document.getElementById('publishDate').textContent = new Date(blog.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('likeCount').textContent = blog.likes_count;
             document.getElementById('commentCount').textContent = blog.comments_count;
 
@@ -344,14 +180,10 @@
             updateLikeUI();
             loadSaveState();
 
-            // Show article, hide loader
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('articleWrapper').style.display = 'block';
             document.getElementById('interactionBar').style.display = 'flex';
-
-            // Pre-load comments (hidden until toggled)
             loadComments();
-
         } catch (err) {
             console.error('Failed to load blog:', err);
             showError();
@@ -366,13 +198,8 @@
     function updateLikeUI() {
         const btn = document.getElementById('likeBtn');
         const icon = document.getElementById('likeIcon');
-        if (isLiked) {
-            btn.classList.add('liked');
-            icon.textContent = '❤️';
-        } else {
-            btn.classList.remove('liked');
-            icon.textContent = '♡';
-        }
+        if (isLiked) { btn.classList.add('liked'); icon.textContent = '❤️'; }
+        else { btn.classList.remove('liked'); icon.textContent = '♡'; }
     }
 
     async function toggleLike() {
@@ -384,9 +211,7 @@
                 document.getElementById('likeCount').textContent = data.likes_count;
                 updateLikeUI();
             }
-        } catch (err) {
-            console.error('Error toggling like:', err);
-        }
+        } catch (err) { console.error('Error toggling like:', err); }
     }
 
     async function loadSaveState() {
@@ -400,126 +225,85 @@
     }
 
     function updateSaveUI() {
-        document.getElementById('saveIcon').textContent = isSaved ? '🔖' : '🔖';
-        document.getElementById('saveBtn').style.opacity = isSaved ? '1' : '0.5';
-        document.getElementById('saveBtn').title = isSaved ? 'Unsave' : 'Save';
+        const btn = document.getElementById('saveBtn');
+        btn.style.opacity = isSaved ? '1' : '0.5';
+        btn.title = isSaved ? 'Unsave' : 'Save';
+        btn.classList.toggle('saved', isSaved);
     }
 
     async function toggleSave() {
         try {
             const method = isSaved ? 'DELETE' : 'POST';
             const res = await fetch(`/api/blogs/save/${blogId}`, { method });
-            if (res.ok) {
-                isSaved = !isSaved;
-                updateSaveUI();
-            }
-        } catch (err) {
-            console.error('Error toggling save:', err);
-        }
+            if (res.ok) { isSaved = !isSaved; updateSaveUI(); }
+        } catch (err) { console.error('Error toggling save:', err); }
     }
-
-    // ── Comments Logic ──
 
     function toggleComments() {
         const section = document.getElementById('commentsSection');
         commentsOpen = !commentsOpen;
         section.style.display = commentsOpen ? 'block' : 'none';
-
-        if (commentsOpen) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        if (commentsOpen) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     async function loadComments() {
         try {
             const res = await fetch(`/api/blogs/comments/${blogId}`);
             if (!res.ok) return;
-
             const data = await res.json();
             const list = document.getElementById('commentsList');
             list.innerHTML = '';
-
             if (data.comments.length === 0) {
                 list.innerHTML = '<p class="no-comments">No comments yet. Be the first!</p>';
                 return;
             }
-
-            data.comments.forEach(c => {
-                list.appendChild(createCommentElement(c));
-            });
-        } catch (err) {
-            console.error('Error loading comments:', err);
-        }
+            data.comments.forEach(c => list.appendChild(createCommentElement(c)));
+        } catch (err) { console.error('Error loading comments:', err); }
     }
 
     async function postComment() {
         const input = document.getElementById('commentInput');
         const content = input.value.trim();
         if (!content) return;
-
         const btn = document.getElementById('postCommentBtn');
-        btn.disabled = true;
-        btn.textContent = 'Posting…';
-
+        btn.disabled = true; btn.textContent = 'Posting…';
         try {
             const res = await fetch(`/api/blogs/comment/${blogId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content })
             });
-
-            if (!res.ok) {
-                const err = await res.json();
-                alert(err.error || 'Failed to post comment');
-                return;
-            }
-
+            if (!res.ok) { const err = await res.json(); alert(err.error || 'Failed to post comment'); return; }
             const data = await res.json();
             const list = document.getElementById('commentsList');
-
-            // Remove "no comments" placeholder if present
             const placeholder = list.querySelector('.no-comments');
             if (placeholder) placeholder.remove();
-
-            // Prepend the new comment
             const el = createCommentElement(data.comment);
             el.classList.add('comment-new');
             list.prepend(el);
-
-            // Update the counter in the interaction bar
             const countEl = document.getElementById('commentCount');
             countEl.textContent = parseInt(countEl.textContent) + 1;
-
             input.value = '';
-        } catch (err) {
-            console.error('Error posting comment:', err);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Post';
-        }
+        } catch (err) { console.error('Error posting comment:', err); }
+        finally { btn.disabled = false; btn.textContent = 'Post'; }
     }
 
     function createCommentElement(comment) {
         const div = document.createElement('div');
         div.className = 'comment-card';
-
         const initial = comment.username.charAt(0).toUpperCase();
-        const date = new Date(comment.created_at).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
-
+        const date = new Date(comment.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const canDelete = (comment.user_id === currentUserId || blogAuthorId === currentUserId);
         div.innerHTML = `
             <div class="comment-header">
                 <div class="comment-avatar">${initial}</div>
                 <div class="comment-meta">
-                    <span class="comment-username">${comment.username}</span>
+                    <span class="comment-username">${escapeHtml(comment.username)}</span>
                     <span class="comment-date">${date}</span>
                 </div>
-                ${(comment.user_id === currentUserId || blogAuthorId === currentUserId) ? `<button class="comment-delete-btn" onclick="deleteComment('${comment.id}', this)">✕</button>` : ''}
+                ${canDelete ? `<button class="comment-delete-btn" onclick="deleteComment('${comment.id}', this)">✕</button>` : ''}
             </div>
-            <p class="comment-text">${escapeHtml(comment.content)}</p>
-        `;
+            <p class="comment-text">${escapeHtml(comment.content)}</p>`;
         return div;
     }
 
@@ -542,14 +326,10 @@
                 const countEl = document.getElementById('commentCount');
                 countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
             }
-        } catch (err) {
-            console.error('Error deleting comment:', err);
-        }
+        } catch (err) { console.error('Error deleting comment:', err); }
     }
 
-    // Boot
     loadBlog();
 </script>
-
 </body>
 </html>

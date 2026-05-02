@@ -8,22 +8,26 @@ import authenticateToken from '../middleware/authorization.js';
 import redis from '../redis.js';
 import { checkRateLimit } from '../utils/rateLimiter.js';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-const storage = multer.diskStorage({
-    destination: path.join(__dirname, '../uploads'),
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        cb(null, `avatar-${req.user.id}-${Date.now()}${ext}`);
-    }
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'lumen-avatars',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        transformation: [{ width: 300, height: 300, crop: 'fill' }],
+    },
 });
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) cb(null, true);
         else cb(new Error('Only image files allowed'));
@@ -40,49 +44,73 @@ const router = express.Router();
 const HTML_LOGIN = `<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h1 { margin-bottom: 1.5rem; color: #333; text-align: center; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.4rem; font-size: 0.9rem; color: #555; }
-        input { width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-        input:focus { outline: none; border-color: #4a90e2; }
-        button[type="submit"] { width: 100%; padding: 0.75rem; background: #4a90e2; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 0.5rem; }
-        button[type="submit"]:hover { background: #357abd; }
-        .message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; text-align: center; font-size: 0.9rem; display: none; }
-        .message.success { background: #d4edda; color: #155724; }
-        .message.error { background: #f8d7da; color: #721c24; }
-        .link { text-align: center; margin-top: 1rem; }
-        .link a { color: #4a90e2; text-decoration: none; }
-        .link a:hover { text-decoration: underline; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0c0b;--surface:#1a1714;--surface-2:#221d19;
+  --border:#2e2a27;--border-bright:#3d3630;
+  --text:#d4cdc7;--text-strong:#ece5df;--muted:#7a736d;--subtle:#5a534d;
+  --accent:#e8845c;--accent-press:#d97249;--accent-soft:rgba(232,132,92,.10);
+  --danger:#e05c5c;--success:#7fb069;
+  --r:8px;--r-md:12px;--r-pill:999px;
+  --ease:cubic-bezier(.4,0,.2,1);--dur:200ms;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);--shadow-glow:0 8px 32px rgba(232,132,92,.2);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--bg);color:var(--text-strong);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:2.5rem 2rem;width:100%;max-width:420px;box-shadow:var(--shadow-md)}
+.brand{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1.05rem;margin-bottom:2rem;justify-content:center}
+.brand-mark{width:30px;height:30px;border-radius:var(--r);background:var(--accent);display:grid;place-items:center;font-weight:800;font-size:.95rem;color:#fff}
+h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;text-align:center}
+.sub{font-size:.875rem;color:var(--muted);text-align:center;margin-bottom:1.75rem}
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em}
+.field input{width:100%;padding:.7rem 1rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);color:var(--text-strong);font-family:inherit;font-size:.95rem;transition:border-color var(--dur) var(--ease)}
+.field input:focus{outline:none;border-color:var(--accent);background:var(--bg)}
+.field input::placeholder{color:var(--subtle)}
+.btn{width:100%;padding:.8rem;background:var(--accent);color:#fff;border:none;border-radius:var(--r-pill);font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer;transition:all var(--dur) var(--ease);margin-top:.5rem}
+.btn:hover{background:var(--accent-press);transform:translateY(-1px);box-shadow:var(--shadow-glow)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.msg{margin-top:1rem;padding:.7rem 1rem;border-radius:var(--r);font-size:.875rem;text-align:center;display:none}
+.msg.success{background:rgba(127,176,105,.12);border:1px solid rgba(127,176,105,.3);color:#7fb069}
+.msg.error{background:rgba(224,92,92,.10);border:1px solid rgba(224,92,92,.25);color:#e05c5c}
+.links{display:flex;flex-direction:column;gap:.5rem;text-align:center;margin-top:1.25rem;font-size:.875rem;color:var(--muted)}
+</style>
 </head>
 <body>
-<div class="container">
-    <h1>Login</h1>
-    <form id="loginForm" onsubmit="handleLogin(event)">
-        <div class="form-group"><label>Username</label><input type="text" id="loginUsername" placeholder="Enter username" required /></div>
-        <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="Enter password" required /></div>
-        <button type="submit">Login</button>
-    </form>
-    <div class="message" id="message"></div>
-    <div class="link">Don't have an account? <a href="/api/auth/signup">Sign up here</a></div>
-    <div class="link"><a href="/api/auth/forgot-password">Forgot password?</a></div>
+<div class="card">
+  <div class="brand"><div class="brand-mark">L</div><span>Lumen</span></div>
+  <h2>Welcome back</h2>
+  <p class="sub">Sign in to your account</p>
+  <form id="loginForm" onsubmit="handleLogin(event)">
+    <div class="field"><label>Username</label><input type="text" id="loginUsername" placeholder="your_username" required autocomplete="username" /></div>
+    <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" /></div>
+    <button class="btn" type="submit" id="loginBtn">Sign In</button>
+  </form>
+  <div class="msg" id="message"></div>
+  <div class="links">
+    <span>Don't have an account? <a href="/api/auth/signup">Create one</a></span>
+    <a href="/api/auth/forgot-password">Forgot your password?</a>
+  </div>
 </div>
 <script>
     function showMessage(text, type) {
         const el = document.getElementById('message');
         el.textContent = text;
-        el.className = 'message ' + type;
+        el.className = 'msg ' + type;
         el.style.display = text ? 'block' : 'none';
     }
     async function handleLogin(e) {
         e.preventDefault();
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true; btn.textContent = 'Signing in…';
         const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
         try {
@@ -90,14 +118,12 @@ const HTML_LOGIN = `<!DOCTYPE html>
             const data = await res.json();
             if (res.ok) {
                 showMessage('Login successful! Redirecting...', 'success');
-                // Wait 1 second before redirecting
-                setTimeout(() => {
-                    window.location.href = '/api/dashboard';
-                }, 1000);
+                setTimeout(() => { window.location.href = '/api/dashboard'; }, 1000);
             } else {
                 showMessage(data.message || 'Login failed', 'error');
+                btn.disabled = false; btn.textContent = 'Sign In';
             }
-        } catch (err) { showMessage('Network error: ' + err.message, 'error'); }
+        } catch (err) { showMessage('Network error: ' + err.message, 'error'); btn.disabled = false; btn.textContent = 'Sign In'; }
     }
 </script>
 </body>
@@ -106,73 +132,99 @@ const HTML_LOGIN = `<!DOCTYPE html>
 const HTML_SIGNUP = `<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h1 { margin-bottom: 1.5rem; color: #333; text-align: center; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.4rem; font-size: 0.9rem; color: #555; }
-        input { width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-        input:focus { outline: none; border-color: #4a90e2; }
-        button[type="submit"] { width: 100%; padding: 0.75rem; background: #4a90e2; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 0.5rem; }
-        button[type="submit"]:hover { background: #357abd; }
-        .message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; text-align: center; font-size: 0.9rem; display: none; }
-        .message.success { background: #d4edda; color: #155724; }
-        .message.error { background: #f8d7da; color: #721c24; }
-        .link { text-align: center; margin-top: 1rem; }
-        .link a { color: #4a90e2; text-decoration: none; }
-        .link a:hover { text-decoration: underline; }
-        .hidden { display: none; }
-        .step-info { font-size: 0.85rem; color: #888; margin-bottom: 1rem; text-align: center; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0c0b;--surface:#1a1714;--surface-2:#221d19;
+  --border:#2e2a27;--border-bright:#3d3630;
+  --text:#d4cdc7;--text-strong:#ece5df;--muted:#7a736d;--subtle:#5a534d;
+  --accent:#e8845c;--accent-press:#d97249;--accent-soft:rgba(232,132,92,.10);
+  --danger:#e05c5c;--success:#7fb069;
+  --r:8px;--r-md:12px;--r-pill:999px;
+  --ease:cubic-bezier(.4,0,.2,1);--dur:200ms;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);--shadow-glow:0 8px 32px rgba(232,132,92,.2);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--bg);color:var(--text-strong);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:2.5rem 2rem;width:100%;max-width:420px;box-shadow:var(--shadow-md)}
+.brand{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1.05rem;margin-bottom:2rem;justify-content:center}
+.brand-mark{width:30px;height:30px;border-radius:var(--r);background:var(--accent);display:grid;place-items:center;font-weight:800;font-size:.95rem;color:#fff}
+h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;text-align:center}
+.sub{font-size:.875rem;color:var(--muted);text-align:center;margin-bottom:1.75rem}
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em}
+.field input{width:100%;padding:.7rem 1rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);color:var(--text-strong);font-family:inherit;font-size:.95rem;transition:border-color var(--dur) var(--ease)}
+.field input:focus{outline:none;border-color:var(--accent);background:var(--bg)}
+.field input::placeholder{color:var(--subtle)}
+.btn{width:100%;padding:.8rem;background:var(--accent);color:#fff;border:none;border-radius:var(--r-pill);font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer;transition:all var(--dur) var(--ease);margin-top:.5rem}
+.btn:hover{background:var(--accent-press);transform:translateY(-1px);box-shadow:var(--shadow-glow)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;border:1px solid var(--border-bright);color:var(--muted);margin-top:.5rem}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text-strong);transform:none;box-shadow:none}
+.msg{margin-top:1rem;padding:.7rem 1rem;border-radius:var(--r);font-size:.875rem;text-align:center;display:none}
+.msg.success{background:rgba(127,176,105,.12);border:1px solid rgba(127,176,105,.3);color:#7fb069}
+.msg.error{background:rgba(224,92,92,.10);border:1px solid rgba(224,92,92,.25);color:#e05c5c}
+.links{text-align:center;margin-top:1.25rem;font-size:.875rem;color:var(--muted)}
+.step-dots{display:flex;justify-content:center;gap:.4rem;margin-bottom:1.75rem}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border-bright);transition:background var(--dur) var(--ease)}
+.dot.active{background:var(--accent)}
+.otp-hint{font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:1rem}
+.hidden{display:none}
+</style>
 </head>
 <body>
-<div class="container">
-    <div id="signupStep1" class="hidden">
-        <h1>Sign Up - Step 1</h1>
-        <div class="step-info">Enter your details to receive OTP</div>
-        <form id="signupStep1Form" onsubmit="handleSignupStep1(event)">
-            <div class="form-group"><label>Username</label><input type="text" id="signupUsername" placeholder="Enter username" required /></div>
-            <div class="form-group"><label>Email</label><input type="email" id="signupEmail" placeholder="Enter email" required /></div>
-            <div class="form-group"><label>Password</label><input type="password" id="signupPassword" placeholder="Enter password" required /></div>
-            <div class="form-group"><label>Confirm Password</label><input type="password" id="signupConfirm" placeholder="Confirm password" required /></div>
-            <button type="submit">Send OTP</button>
-        </form>
-        <div class="message" id="messageStep1"></div>
-        <div class="link">Already have an account? <a href="/api/auth/login">Login here</a></div>
-    </div>
+<div class="card">
+  <div class="brand"><div class="brand-mark">L</div><span>Lumen</span></div>
+  <div class="step-dots"><div class="dot active" id="dot1"></div><div class="dot" id="dot2"></div></div>
 
-    <div id="signupStep2">
-        <h1>Sign Up - Step 2</h1>
-        <div class="step-info">Enter the OTP sent to your email</div>
-        <form id="signupStep2Form" onsubmit="handleSignupStep2(event)">
-            <div class="form-group"><label>OTP (6 digits)</label><input type="text" id="signupOTP" placeholder="Enter OTP" maxlength="6" required /></div>
-            <button type="submit">Verify & Create Account</button>
-        </form>
-        <div class="message" id="messageStep2"></div>
-        <div class="link"><a href="#" onclick="backToStep1(event)">Back to Step 1</a></div>
-    </div>
+  <div id="signupStep1">
+    <h2>Create account</h2>
+    <p class="sub">Join Lumen and start writing</p>
+    <form id="signupStep1Form" onsubmit="handleSignupStep1(event)">
+      <div class="field"><label>Username</label><input type="text" id="signupUsername" placeholder="your_username" required autocomplete="username" /></div>
+      <div class="field"><label>Email</label><input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email" /></div>
+      <div class="field"><label>Password</label><input type="password" id="signupPassword" placeholder="••••••••" required autocomplete="new-password" /></div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="signupConfirm" placeholder="••••••••" required autocomplete="new-password" /></div>
+      <button class="btn" type="submit" id="step1Btn">Send OTP</button>
+    </form>
+    <div class="msg" id="messageStep1"></div>
+    <div class="links">Already have an account? <a href="/api/auth/login">Sign in</a></div>
+  </div>
+
+  <div id="signupStep2" class="hidden">
+    <h2>Verify email</h2>
+    <p class="otp-hint">Enter the 6-digit code sent to your email</p>
+    <form id="signupStep2Form" onsubmit="handleSignupStep2(event)">
+      <div class="field"><label>OTP Code</label><input type="text" id="signupOTP" placeholder="000000" maxlength="6" required inputmode="numeric" pattern="[0-9]{6}" /></div>
+      <button class="btn" type="submit" id="step2Btn">Verify & Create Account</button>
+      <button class="btn btn-ghost" type="button" onclick="backToStep1(event)">← Back</button>
+    </form>
+    <div class="msg" id="messageStep2"></div>
+  </div>
 </div>
 <script>
     let currentEmail = '';
-    
+
     function showMessage(elementId, text, type) {
         const el = document.getElementById(elementId);
         el.textContent = text;
-        el.className = 'message ' + type;
+        el.className = 'msg ' + type;
         el.style.display = text ? 'block' : 'none';
     }
 
     function showStep(stepNumber) {
         document.getElementById('signupStep1').classList.toggle('hidden', stepNumber !== 1);
         document.getElementById('signupStep2').classList.toggle('hidden', stepNumber !== 2);
-        if (stepNumber === 2) {
-            document.getElementById('signupOTP').focus();
-        }
+        document.getElementById('dot1').classList.toggle('active', stepNumber === 1);
+        document.getElementById('dot2').classList.toggle('active', stepNumber === 2);
+        if (stepNumber === 2) { document.getElementById('signupOTP').focus(); }
     }
 
     function backToStep1(e) {
@@ -184,11 +236,12 @@ const HTML_SIGNUP = `<!DOCTYPE html>
 
     async function handleSignupStep1(e) {
         e.preventDefault();
+        const btn = document.getElementById('step1Btn');
+        btn.disabled = true; btn.textContent = 'Sending…';
         const username = document.getElementById('signupUsername').value.trim().toLowerCase();
         const email = document.getElementById('signupEmail').value.trim().toLowerCase();
         const password = document.getElementById('signupPassword').value;
         const confirm_password = document.getElementById('signupConfirm').value;
-
         try {
             const res = await fetch('/api/auth/signup-request', {
                 method: 'POST',
@@ -202,16 +255,19 @@ const HTML_SIGNUP = `<!DOCTYPE html>
                 setTimeout(() => showStep(2), 1500);
             } else {
                 showMessage('messageStep1', data.message || 'Error sending OTP', 'error');
+                btn.disabled = false; btn.textContent = 'Send OTP';
             }
         } catch (err) {
             showMessage('messageStep1', 'Network error: ' + err.message, 'error');
+            btn.disabled = false; btn.textContent = 'Send OTP';
         }
     }
 
     async function handleSignupStep2(e) {
         e.preventDefault();
+        const btn = document.getElementById('step2Btn');
+        btn.disabled = true; btn.textContent = 'Verifying…';
         const otp = document.getElementById('signupOTP').value;
-
         try {
             const res = await fetch('/api/auth/verify-otp', {
                 method: 'POST',
@@ -220,17 +276,18 @@ const HTML_SIGNUP = `<!DOCTYPE html>
             });
             const data = await res.json();
             if (res.ok) {
-                showMessage('messageStep2', 'Account created successfully!', 'success');
+                showMessage('messageStep2', 'Account created successfully! Redirecting…', 'success');
                 setTimeout(() => { window.location.href = '/api/auth/login'; }, 2000);
             } else {
                 showMessage('messageStep2', data.message || 'OTP verification failed', 'error');
+                btn.disabled = false; btn.textContent = 'Verify & Create Account';
             }
         } catch (err) {
             showMessage('messageStep2', 'Network error: ' + err.message, 'error');
+            btn.disabled = false; btn.textContent = 'Verify & Create Account';
         }
     }
 
-    // Initial setup
     showStep(1);
 </script>
 </body>
@@ -239,74 +296,103 @@ const HTML_SIGNUP = `<!DOCTYPE html>
 const HTML_FORGOT_PASSWORD = `<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forgot Password</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h1 { margin-bottom: 1.5rem; color: #333; text-align: center; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.4rem; font-size: 0.9rem; color: #555; }
-        input { width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-        input:focus { outline: none; border-color: #4a90e2; }
-        button[type="submit"] { width: 100%; padding: 0.75rem; background: #4a90e2; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 0.5rem; }
-        button[type="submit"]:hover { background: #357abd; }
-        .message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; text-align: center; font-size: 0.9rem; display: none; }
-        .message.success { background: #d4edda; color: #155724; }
-        .message.error { background: #f8d7da; color: #721c24; }
-        .link { text-align: center; margin-top: 1rem; }
-        .link a { color: #4a90e2; text-decoration: none; }
-        .link a:hover { text-decoration: underline; }
-        .hidden { display: none; }
-        .step-info { font-size: 0.85rem; color: #888; margin-bottom: 1rem; text-align: center; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reset Password — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0c0b;--surface:#1a1714;--surface-2:#221d19;
+  --border:#2e2a27;--border-bright:#3d3630;
+  --text:#d4cdc7;--text-strong:#ece5df;--muted:#7a736d;--subtle:#5a534d;
+  --accent:#e8845c;--accent-press:#d97249;--accent-soft:rgba(232,132,92,.10);
+  --danger:#e05c5c;--success:#7fb069;
+  --r:8px;--r-md:12px;--r-pill:999px;
+  --ease:cubic-bezier(.4,0,.2,1);--dur:200ms;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);--shadow-glow:0 8px 32px rgba(232,132,92,.2);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--bg);color:var(--text-strong);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:2.5rem 2rem;width:100%;max-width:420px;box-shadow:var(--shadow-md)}
+.brand{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1.05rem;margin-bottom:2rem;justify-content:center}
+.brand-mark{width:30px;height:30px;border-radius:var(--r);background:var(--accent);display:grid;place-items:center;font-weight:800;font-size:.95rem;color:#fff}
+h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;text-align:center}
+.sub{font-size:.875rem;color:var(--muted);text-align:center;margin-bottom:1.75rem}
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em}
+.field input{width:100%;padding:.7rem 1rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);color:var(--text-strong);font-family:inherit;font-size:.95rem;transition:border-color var(--dur) var(--ease)}
+.field input:focus{outline:none;border-color:var(--accent);background:var(--bg)}
+.field input::placeholder{color:var(--subtle)}
+.btn{width:100%;padding:.8rem;background:var(--accent);color:#fff;border:none;border-radius:var(--r-pill);font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer;transition:all var(--dur) var(--ease);margin-top:.5rem}
+.btn:hover{background:var(--accent-press);transform:translateY(-1px);box-shadow:var(--shadow-glow)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;border:1px solid var(--border-bright);color:var(--muted);margin-top:.5rem}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text-strong);transform:none;box-shadow:none}
+.msg{margin-top:1rem;padding:.7rem 1rem;border-radius:var(--r);font-size:.875rem;text-align:center;display:none}
+.msg.success{background:rgba(127,176,105,.12);border:1px solid rgba(127,176,105,.3);color:#7fb069}
+.msg.error{background:rgba(224,92,92,.10);border:1px solid rgba(224,92,92,.25);color:#e05c5c}
+.links{text-align:center;margin-top:1.25rem;font-size:.875rem;color:var(--muted)}
+.step-dots{display:flex;justify-content:center;gap:.4rem;margin-bottom:1.75rem}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border-bright);transition:background var(--dur) var(--ease)}
+.dot.active{background:var(--accent)}
+.hidden{display:none}
+</style>
 </head>
 <body>
-<div class="container">
-    <div id="resetStep1">
-        <h1>Forgot Password</h1>
-        <div class="step-info">Enter your email and username to receive OTP</div>
-        <form id="resetStep1Form" onsubmit="handleResetStep1(event)">
-            <div class="form-group"><label>Email</label><input type="email" id="resetEmail" placeholder="Enter your email" required /></div>
-            <div class="form-group"><label>Username</label><input type="text" id="resetUsername" placeholder="Enter your username" required /></div>
-            <button type="submit">Send OTP</button>
-        </form>
-        <div class="message" id="messageStep1"></div>
-        <div class="link"><a href="/api/auth/login">Back to Login</a></div>
-    </div>
+<div class="card">
+  <div class="brand"><div class="brand-mark">L</div><span>Lumen</span></div>
+  <div class="step-dots">
+    <div class="dot active" id="dot1"></div>
+    <div class="dot" id="dot2"></div>
+    <div class="dot" id="dot3"></div>
+  </div>
 
-    <div id="resetStep2" class="hidden">
-        <h1>Verify OTP</h1>
-        <div class="step-info">Enter the OTP sent to your email</div>
-        <form id="resetStep2Form" onsubmit="handleResetStep2(event)">
-            <div class="form-group"><label>OTP (6 digits)</label><input type="text" id="resetOTP" placeholder="Enter OTP" maxlength="6" required /></div>
-            <button type="submit">Verify OTP</button>
-        </form>
-        <div class="message" id="messageStep2"></div>
-        <div class="link"><a href="#" onclick="backToStep1(event)">Back to Step 1</a></div>
-    </div>
+  <div id="resetStep1">
+    <h2>Forgot password</h2>
+    <p class="sub">Enter your email and username to receive a reset code</p>
+    <form id="resetStep1Form" onsubmit="handleResetStep1(event)">
+      <div class="field"><label>Email</label><input type="email" id="resetEmail" placeholder="you@example.com" required autocomplete="email" /></div>
+      <div class="field"><label>Username</label><input type="text" id="resetUsername" placeholder="your_username" required autocomplete="username" /></div>
+      <button class="btn" type="submit" id="r1Btn">Send OTP</button>
+    </form>
+    <div class="msg" id="messageStep1"></div>
+    <div class="links"><a href="/api/auth/login">← Back to sign in</a></div>
+  </div>
 
-    <div id="resetStep3" class="hidden">
-        <h1>Reset Password</h1>
-        <div class="step-info">Enter your new password</div>
-        <form id="resetStep3Form" onsubmit="handleResetStep3(event)">
-            <div class="form-group"><label>New Password</label><input type="password" id="resetNewPassword" placeholder="Enter new password" required /></div>
-            <div class="form-group"><label>Confirm Password</label><input type="password" id="resetConfirmPassword" placeholder="Confirm password" required /></div>
-            <button type="submit">Reset Password</button>
-        </form>
-        <div class="message" id="messageStep3"></div>
-    </div>
+  <div id="resetStep2" class="hidden">
+    <h2>Enter code</h2>
+    <p class="sub">Check your email for the 6-digit code</p>
+    <form id="resetStep2Form" onsubmit="handleResetStep2(event)">
+      <div class="field"><label>OTP Code</label><input type="text" id="resetOTP" placeholder="000000" maxlength="6" required inputmode="numeric" pattern="[0-9]{6}" /></div>
+      <button class="btn" type="submit" id="r2Btn">Verify Code</button>
+      <button class="btn btn-ghost" type="button" onclick="backToStep1(event)">← Back</button>
+    </form>
+    <div class="msg" id="messageStep2"></div>
+  </div>
+
+  <div id="resetStep3" class="hidden">
+    <h2>New password</h2>
+    <p class="sub">Choose a strong password for your account</p>
+    <form id="resetStep3Form" onsubmit="handleResetStep3(event)">
+      <div class="field"><label>New Password</label><input type="password" id="resetNewPassword" placeholder="••••••••" required autocomplete="new-password" /></div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="resetConfirmPassword" placeholder="••••••••" required autocomplete="new-password" /></div>
+      <button class="btn" type="submit" id="r3Btn">Reset Password</button>
+    </form>
+    <div class="msg" id="messageStep3"></div>
+  </div>
 </div>
 
 <script>
     let resetEmail = '';
-    
+
     function showMessage(elementId, text, type) {
         const el = document.getElementById(elementId);
         el.textContent = text;
-        el.className = 'message ' + type;
+        el.className = 'msg ' + type;
         el.style.display = text ? 'block' : 'none';
     }
 
@@ -314,11 +400,11 @@ const HTML_FORGOT_PASSWORD = `<!DOCTYPE html>
         document.getElementById('resetStep1').classList.toggle('hidden', stepNumber !== 1);
         document.getElementById('resetStep2').classList.toggle('hidden', stepNumber !== 2);
         document.getElementById('resetStep3').classList.toggle('hidden', stepNumber !== 3);
-        if (stepNumber === 2) {
-            document.getElementById('resetOTP').focus();
-        } else if (stepNumber === 3) {
-            document.getElementById('resetNewPassword').focus();
-        }
+        document.getElementById('dot1').classList.toggle('active', stepNumber === 1);
+        document.getElementById('dot2').classList.toggle('active', stepNumber === 2);
+        document.getElementById('dot3').classList.toggle('active', stepNumber === 3);
+        if (stepNumber === 2) { document.getElementById('resetOTP').focus(); }
+        else if (stepNumber === 3) { document.getElementById('resetNewPassword').focus(); }
     }
 
     function backToStep1(e) {
@@ -330,9 +416,10 @@ const HTML_FORGOT_PASSWORD = `<!DOCTYPE html>
 
     async function handleResetStep1(e) {
         e.preventDefault();
+        const btn = document.getElementById('r1Btn');
+        btn.disabled = true; btn.textContent = 'Sending…';
         const email = document.getElementById('resetEmail').value.trim().toLowerCase();
         const username = document.getElementById('resetUsername').value.trim().toLowerCase();
-
         try {
             const res = await fetch('/api/auth/login/forgot-password', {
                 method: 'POST',
@@ -346,16 +433,19 @@ const HTML_FORGOT_PASSWORD = `<!DOCTYPE html>
                 setTimeout(() => showStep(2), 1500);
             } else {
                 showMessage('messageStep1', data.message || 'Error sending OTP', 'error');
+                btn.disabled = false; btn.textContent = 'Send OTP';
             }
         } catch (err) {
             showMessage('messageStep1', 'Network error: ' + err.message, 'error');
+            btn.disabled = false; btn.textContent = 'Send OTP';
         }
     }
 
     async function handleResetStep2(e) {
         e.preventDefault();
+        const btn = document.getElementById('r2Btn');
+        btn.disabled = true; btn.textContent = 'Verifying…';
         const otp = document.getElementById('resetOTP').value;
-
         try {
             const res = await fetch('/api/auth/verify-reset-otp', {
                 method: 'POST',
@@ -364,21 +454,24 @@ const HTML_FORGOT_PASSWORD = `<!DOCTYPE html>
             });
             const data = await res.json();
             if (res.ok) {
-                showMessage('messageStep2', 'OTP verified! Now set your new password.', 'success');
+                showMessage('messageStep2', 'Code verified! Set your new password.', 'success');
                 setTimeout(() => showStep(3), 1500);
             } else {
                 showMessage('messageStep2', data.message || 'OTP verification failed', 'error');
+                btn.disabled = false; btn.textContent = 'Verify Code';
             }
         } catch (err) {
             showMessage('messageStep2', 'Network error: ' + err.message, 'error');
+            btn.disabled = false; btn.textContent = 'Verify Code';
         }
     }
 
     async function handleResetStep3(e) {
         e.preventDefault();
+        const btn = document.getElementById('r3Btn');
+        btn.disabled = true; btn.textContent = 'Resetting…';
         const newPassword = document.getElementById('resetNewPassword').value;
         const confirmPassword = document.getElementById('resetConfirmPassword').value;
-
         try {
             const res = await fetch('/api/auth/reset-password', {
                 method: 'POST',
@@ -387,17 +480,18 @@ const HTML_FORGOT_PASSWORD = `<!DOCTYPE html>
             });
             const data = await res.json();
             if (res.ok) {
-                showMessage('messageStep3', 'Password reset successfully! Redirecting to login...', 'success');
+                showMessage('messageStep3', 'Password reset successfully! Redirecting…', 'success');
                 setTimeout(() => { window.location.href = '/api/auth/login'; }, 2000);
             } else {
                 showMessage('messageStep3', data.message || 'Password reset failed', 'error');
+                btn.disabled = false; btn.textContent = 'Reset Password';
             }
         } catch (err) {
             showMessage('messageStep3', 'Network error: ' + err.message, 'error');
+            btn.disabled = false; btn.textContent = 'Reset Password';
         }
     }
 
-    // Initial setup
     showStep(1);
 </script>
 </body>
@@ -430,8 +524,8 @@ router.post('/login', async (req, res, next) => {
         // Register the refresh token's jti in Redis — this is what rotation checks against.
         // Key: rt:{jti}  Value: userId  TTL: 7 days (matches token expiry)
         await redis.set(`rt:${tokens.jti}`, user.rows[0].id, 'EX', 7 * 24 * 60 * 60);
-        res.cookie('accessToken', tokens.Accesstoken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 15 * 60 * 1000 });
-        res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie('accessToken', tokens.Accesstoken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Strict', maxAge: 15 * 60 * 1000 });
+        res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
         return res.status(200).json({ message: 'Logged in successfully' });
     } catch (error) {
         next(error);
@@ -475,8 +569,8 @@ router.post('/refresh', async (req, res, next) => {
     const newTokens = jwToken.jwtToken(id, username);
     await redis.set(`rt:${newTokens.jti}`, id, 'EX', 7 * 24 * 60 * 60);
 
-    res.cookie('accessToken', newTokens.Accesstoken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 15 * 60 * 1000 });
-    res.cookie('refreshToken', newTokens.refreshToken, { httpOnly: true, secure: false, sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('accessToken', newTokens.Accesstoken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Strict', maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', newTokens.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     return res.status(200).json({ message: 'Tokens refreshed successfully' });
 });
@@ -681,7 +775,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
 router.post('/upload-avatar', authenticateToken, upload.single('avatar'), async (req, res, next) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-        const url = `/uploads/${req.file.filename}`;
+        const url = req.file.path;
         await pool.query('UPDATE users SET profile_picture = $1 WHERE id = $2', [url, req.user.id]);
         res.json({ profile_picture: url });
     } catch (error) {

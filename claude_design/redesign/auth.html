@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#0e0c0b; --surface:#1a1714; --surface-2:#221d19;
+    --border:#2e2a27; --border-bright:#3d3630;
+    --text:#d4cdc7; --text-strong:#ece5df; --muted:#7a736d; --subtle:#5a534d;
+    --accent:#e8845c; --accent-soft:rgba(232,132,92,.10); --accent-press:#d97249;
+    --gold:#c9a96e; --gold-soft:rgba(201,169,110,.12);
+    --danger:#e05c5c; --success:#7fb069; --warn:#f59e0b;
+    --shadow-md:0 8px 24px rgba(0,0,0,0.35); --shadow-glow:0 8px 32px rgba(232,132,92,.2);
+    --r-sm:6px; --r:8px; --r-md:12px; --r-pill:999px;
+    --ease:cubic-bezier(.4,0,.2,1); --dur:200ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text-strong);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh}
+body{display:grid;place-items:center;padding:2rem}
+a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+
+.auth-shell{width:100%;max-width:1100px;display:grid;grid-template-columns:1.05fr 1fr;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+
+/* Editorial side */
+.editorial{
+    padding:3.5rem;display:flex;flex-direction:column;justify-content:space-between;
+    background:linear-gradient(160deg,rgba(232,132,92,.08),rgba(201,169,110,.04) 60%,transparent);
+    border-right:1px solid var(--border);
+    min-height:620px;
+}
+.brand{display:flex;align-items:center;gap:.7rem;font-weight:700;font-size:1.15rem}
+.brand-mark{width:32px;height:32px;border-radius:9px;background:var(--accent);display:grid;place-items:center;font-weight:800;color:#fff}
+.editorial-mid{}
+.editorial h1{font-family:'Newsreader',serif;font-style:italic;font-weight:500;font-size:clamp(2rem,3.5vw,3.2rem);line-height:1.15;letter-spacing:-.015em;margin-bottom:1rem;text-wrap:balance}
+.editorial p{color:var(--text);font-size:1.02rem;line-height:1.65;max-width:38ch}
+.editorial .quote{margin-top:2rem;padding-left:1.25rem;border-left:2px solid var(--gold);font-family:'Newsreader',serif;font-style:italic;color:var(--muted);font-size:.95rem}
+.editorial-foot{display:flex;align-items:center;gap:.85rem;color:var(--subtle);font-size:.85rem}
+.dots{display:flex;gap:.4rem}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--subtle)}
+.dots span.on{background:var(--accent);width:18px;border-radius:3px}
+
+/* Form side */
+.form-side{padding:3.5rem 3rem;display:flex;flex-direction:column;justify-content:center;background:var(--surface)}
+.form-pane{display:none;animation:fade .35s var(--ease)}
+.form-pane.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.form-eyebrow{font-size:.78rem;color:var(--accent);text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:.5rem}
+.form-title{font-size:1.85rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.5rem}
+.form-sub{color:var(--muted);font-size:.95rem;margin-bottom:2rem}
+
+.field{margin-bottom:1.1rem;position:relative}
+.field label{display:block;font-size:.78rem;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem}
+.field input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text-strong);padding:.95rem 1rem;border-radius:var(--r-md);font-size:.95rem;transition:all var(--dur) var(--ease)}
+.field input:focus{outline:none;border-color:rgba(232,132,92,.5);box-shadow:0 0 0 4px rgba(232,132,92,.1)}
+.field input::placeholder{color:var(--subtle)}
+.field-toggle{position:absolute;right:.85rem;top:2.05rem;color:var(--subtle);padding:.35rem;border-radius:var(--r-sm);transition:color var(--dur) var(--ease)}
+.field-toggle:hover{color:var(--text)}
+
+.field-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;font-size:.85rem}
+.checkbox{display:inline-flex;align-items:center;gap:.5rem;color:var(--muted);cursor:pointer}
+.checkbox input{appearance:none;width:16px;height:16px;border:1.5px solid var(--border-bright);border-radius:4px;cursor:pointer;position:relative;transition:all var(--dur) var(--ease)}
+.checkbox input:checked{background:var(--accent);border-color:transparent}
+.checkbox input:checked::after{content:'';position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.link{color:var(--accent);font-weight:500;transition:opacity var(--dur) var(--ease)}
+.link:hover{opacity:.8}
+
+.btn-primary{width:100%;padding:.95rem 1.4rem;font-size:.95rem;font-weight:600;border-radius:var(--r-pill);background:var(--accent);color:#fff;transition:all var(--dur) var(--ease);display:inline-flex;align-items:center;justify-content:center;gap:.5rem}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-glow);background:var(--accent-press)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+.divider{display:flex;align-items:center;gap:.85rem;margin:1.5rem 0;font-size:.78rem;color:var(--subtle);text-transform:uppercase;letter-spacing:.1em}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.btn-oauth{width:100%;padding:.85rem 1.4rem;font-size:.9rem;font-weight:500;border-radius:var(--r-pill);background:var(--surface-2);border:1px solid var(--border);color:var(--text);display:inline-flex;align-items:center;justify-content:center;gap:.6rem;transition:all var(--dur) var(--ease);margin-bottom:.6rem}
+.btn-oauth:hover{background:var(--border);color:var(--text-strong)}
+
+.foot-link{text-align:center;margin-top:2rem;color:var(--muted);font-size:.9rem}
+
+/* OTP */
+.otp-row{display:flex;justify-content:space-between;gap:.6rem;margin-bottom:1.5rem}
+.otp-input{flex:1;aspect-ratio:1/1.1;text-align:center;background:var(--surface-2);border:1.5px solid var(--border);color:var(--text-strong);border-radius:var(--r-md);font-size:1.6rem;font-weight:600;transition:all var(--dur) var(--ease)}
+.otp-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px rgba(232,132,92,.15)}
+.otp-input.filled{border-color:rgba(232,132,92,.4)}
+.resend{text-align:center;font-size:.85rem;color:var(--muted);margin-bottom:1.5rem}
+
+/* Success state */
+.success-pane{text-align:center;padding:1rem 0}
+.success-ico{width:72px;height:72px;border-radius:50%;background:rgba(127,176,105,.15);color:var(--success);margin:0 auto 1.25rem;display:grid;place-items:center}
+.success-pane h2{font-size:1.6rem;font-weight:700;margin-bottom:.5rem;letter-spacing:-.015em}
+.success-pane p{color:var(--muted);margin-bottom:1.75rem}
+
+/* Strength meter */
+.strength{margin-top:.5rem;display:flex;gap:.3rem}
+.strength span{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background var(--dur) var(--ease)}
+.strength.s1 span:nth-child(1){background:var(--danger)}
+.strength.s2 span:nth-child(-n+2){background:var(--warn)}
+.strength.s3 span:nth-child(-n+3){background:var(--success)}
+.strength.s4 span{background:var(--success)}
+.strength-label{font-size:.78rem;color:var(--subtle);margin-top:.4rem}
+
+@media(max-width:880px){.auth-shell{grid-template-columns:1fr}.editorial{display:none}.form-side{padding:2.5rem 2rem}}
+</style>
+</head>
+<body>
+<div class="auth-shell">
+    <!-- Editorial column -->
+    <aside class="editorial">
+        <div class="brand"><div class="brand-mark">L</div><span>Lumen</span></div>
+        <div class="editorial-mid">
+            <h1>A quieter place to read, write, and think.</h1>
+            <p>Lumen is a reading platform for people who love long-form. No infinite scrolls. No engagement bait. Just stories that respect your attention.</p>
+            <div class="quote">"The most underrated luxury of 2026 is the unhurried sentence."<br><span style="color:var(--subtle);font-size:.82rem;font-style:normal;display:block;margin-top:.4rem">— Iris Chen, on Lumen</span></div>
+        </div>
+        <div class="editorial-foot">
+            <div class="dots"><span class="on"></span><span></span><span></span></div>
+            <span>Editorial · Issue 14</span>
+        </div>
+    </aside>
+
+    <!-- Forms -->
+    <section class="form-side">
+        <!-- LOGIN -->
+        <div class="form-pane active" id="pane-login">
+            <div class="form-eyebrow">Welcome back</div>
+            <h1 class="form-title">Sign in to Lumen</h1>
+            <p class="form-sub">Pick up where you left off.</p>
+
+            <form onsubmit="event.preventDefault(); window.location='dashboard.html'">
+                <div class="field"><label>Email</label><input type="email" placeholder="you@example.com" required></div>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" id="loginPwd" placeholder="••••••••" required>
+                    <button type="button" class="field-toggle" onclick="togglePwd('loginPwd', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <div class="field-row">
+                    <label class="checkbox"><input type="checkbox" checked><span>Remember me</span></label>
+                    <a class="link" href="#" onclick="show('forgot');return false">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn-primary">Continue</button>
+            </form>
+
+            <div class="divider">or</div>
+            <button class="btn-oauth"><svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-11.3 8 12 12 0 1 1 7.9-21.1l5.7-5.7A20 20 0 1 0 24 44a20 20 0 0 0 19.6-23.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8A12 12 0 0 1 24 12c3.1 0 5.9 1.1 8 3.1l5.7-5.7A20 20 0 0 0 6.3 14.7z"/><path fill="#4CAF50" d="M24 44a20 20 0 0 0 13.5-5.2l-6.2-5.3A12 12 0 0 1 12.7 28l-6.5 5A20 20 0 0 0 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-4.1 5.5l6.2 5.3C39 36 44 31 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>Continue with Google</button>
+            <button class="btn-oauth"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 1.6c.1 1.2-.4 2.3-1.1 3.1-.7.8-1.9 1.4-3 1.3-.1-1.1.4-2.3 1.1-3.1.7-.8 2-1.4 3-1.3zM20 17.4c-.6 1.3-.8 1.9-1.5 3-1 1.6-2.4 3.5-4.2 3.6-1.6 0-2-1-4.1-1-2.1 0-2.6 1-4.2 1-1.8 0-3.1-1.8-4.1-3.3-2.7-4.2-3-9.2-1.3-11.8 1.2-1.9 3.1-3 4.9-3 1.8 0 2.9 1 4.4 1 1.4 0 2.3-1 4.4-1 1.6 0 3.3.9 4.5 2.4-4 2.2-3.3 7.9.9 9z"/></svg>Continue with Apple</button>
+
+            <p class="foot-link">New to Lumen? <a class="link" href="#" onclick="show('signup');return false">Create account</a></p>
+        </div>
+
+        <!-- SIGNUP -->
+        <div class="form-pane" id="pane-signup">
+            <div class="form-eyebrow">Join Lumen</div>
+            <h1 class="form-title">Create your account</h1>
+            <p class="form-sub">A reading life, written in the open.</p>
+
+            <form onsubmit="event.preventDefault(); show('otp')">
+                <div class="field"><label>Display name</label><input type="text" placeholder="How you'll appear on stories" required></div>
+                <div class="field"><label>Email</label><input type="email" placeholder="you@example.com" required></div>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" id="signupPwd" placeholder="At least 8 characters" required oninput="updateStrength(this.value)">
+                    <button type="button" class="field-toggle" onclick="togglePwd('signupPwd', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <div class="strength" id="strengthMeter"><span></span><span></span><span></span><span></span></div>
+                    <div class="strength-label" id="strengthLabel">Use 8+ characters with a mix of letters, numbers & symbols</div>
+                </div>
+                <p style="font-size:.78rem;color:var(--subtle);margin-bottom:1.25rem;line-height:1.5">By continuing, you agree to Lumen's <a class="link" href="#">Terms</a> and <a class="link" href="#">Privacy Policy</a>.</p>
+                <button type="submit" class="btn-primary">Create account</button>
+            </form>
+
+            <p class="foot-link">Already have an account? <a class="link" href="#" onclick="show('login');return false">Sign in</a></p>
+        </div>
+
+        <!-- OTP -->
+        <div class="form-pane" id="pane-otp">
+            <div class="form-eyebrow">Verify email</div>
+            <h1 class="form-title">Check your inbox</h1>
+            <p class="form-sub">We sent a 6-digit code to <strong style="color:var(--text-strong)">you@example.com</strong></p>
+
+            <form onsubmit="event.preventDefault(); show('success')">
+                <div class="otp-row" id="otpRow">
+                    <input class="otp-input" maxlength="1" inputmode="numeric">
+                    <input class="otp-input" maxlength="1" inputmode="numeric">
+                    <input class="otp-input" maxlength="1" inputmode="numeric">
+                    <input class="otp-input" maxlength="1" inputmode="numeric">
+                    <input class="otp-input" maxlength="1" inputmode="numeric">
+                    <input class="otp-input" maxlength="1" inputmode="numeric">
+                </div>
+                <div class="resend">Didn't get it? <a class="link" href="#" onclick="return false">Resend in <span id="resendTimer">30s</span></a></div>
+                <button type="submit" class="btn-primary">Verify & continue</button>
+            </form>
+
+            <p class="foot-link"><a class="link" href="#" onclick="show('signup');return false">← Use a different email</a></p>
+        </div>
+
+        <!-- FORGOT -->
+        <div class="form-pane" id="pane-forgot">
+            <div class="form-eyebrow">Reset access</div>
+            <h1 class="form-title">Forgot your password?</h1>
+            <p class="form-sub">Enter your email and we'll send a recovery link.</p>
+
+            <form onsubmit="event.preventDefault(); show('forgot-sent')">
+                <div class="field"><label>Email</label><input type="email" placeholder="you@example.com" required></div>
+                <button type="submit" class="btn-primary">Send recovery link</button>
+            </form>
+            <p class="foot-link"><a class="link" href="#" onclick="show('login');return false">← Back to sign in</a></p>
+        </div>
+
+        <!-- FORGOT SENT -->
+        <div class="form-pane" id="pane-forgot-sent">
+            <div class="success-pane">
+                <div class="success-ico">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                </div>
+                <h2>Check your inbox</h2>
+                <p>We sent a recovery link to your email. The link expires in 30 minutes.</p>
+                <button class="btn-primary" onclick="show('login')">Back to sign in</button>
+            </div>
+        </div>
+
+        <!-- SUCCESS -->
+        <div class="form-pane" id="pane-success">
+            <div class="success-pane">
+                <div class="success-ico">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+                <h2>You're in.</h2>
+                <p>Welcome to Lumen. Let's find you something good to read.</p>
+                <a class="btn-primary" href="dashboard.html">Continue to dashboard</a>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+function show(name){
+    document.querySelectorAll('.form-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById('pane-'+name).classList.add('active');
+    if(name==='otp'){ const f=document.querySelector('#pane-otp .otp-input'); if(f) f.focus(); startResend(); }
+}
+function togglePwd(id, btn){
+    const inp=document.getElementById(id);
+    inp.type = inp.type==='password' ? 'text' : 'password';
+}
+function updateStrength(v){
+    let s=0;
+    if(v.length>=8) s++;
+    if(/[A-Z]/.test(v) && /[a-z]/.test(v)) s++;
+    if(/\d/.test(v)) s++;
+    if(/[^A-Za-z0-9]/.test(v)) s++;
+    const m=document.getElementById('strengthMeter'), l=document.getElementById('strengthLabel');
+    m.className='strength s'+s;
+    l.textContent=['Use 8+ characters with a mix','Weak','Okay','Strong','Excellent'][s];
+}
+
+// OTP behavior
+const otpInputs=[...document.querySelectorAll('#pane-otp .otp-input')];
+otpInputs.forEach((inp,i)=>{
+    inp.addEventListener('input',e=>{
+        const v=e.target.value.replace(/\D/g,'');
+        e.target.value=v;
+        if(v) e.target.classList.add('filled'); else e.target.classList.remove('filled');
+        if(v && i<otpInputs.length-1) otpInputs[i+1].focus();
+    });
+    inp.addEventListener('keydown',e=>{
+        if(e.key==='Backspace' && !e.target.value && i>0) otpInputs[i-1].focus();
+    });
+});
+let resendInt=null;
+function startResend(){
+    let t=30;
+    document.getElementById('resendTimer').textContent=t+'s';
+    clearInterval(resendInt);
+    resendInt=setInterval(()=>{
+        t--;
+        if(t<=0){ clearInterval(resendInt); document.getElementById('resendTimer').textContent='now'; }
+        else document.getElementById('resendTimer').textContent=t+'s';
+    },1000);
+}
+</script>
+</body>
+</html>

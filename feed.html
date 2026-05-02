@@ -1,82 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Feed</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 2rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        }
-        h1 { color: #2d3748; text-align: center; }
-        
-        .search-container { margin-bottom: 2rem; display: flex; gap: 1rem; }
-        input[type="text"] {
-            flex: 1; padding: 1rem; border-radius: 8px;
-            border: 1px solid #ccc; font-size: 1rem; outline: none;
-        }
-        button {
-            padding: 1rem 1.5rem; border-radius: 8px; border: none;
-            background: #4a90e2; color: white; font-weight: 600;
-            cursor: pointer; transition: 0.3s;
-        }
-        button:hover { background: #357abd; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feed — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#0e0c0b; --surface:#1a1714; --surface-2:#221d19;
+    --border:#2e2a27; --border-bright:#3d3630;
+    --text:#d4cdc7; --text-strong:#ece5df; --muted:#7a736d; --subtle:#5a534d;
+    --accent:#e8845c; --accent-soft:rgba(232,132,92,.10); --accent-press:#d97249;
+    --gold:#c9a96e; --gold-soft:rgba(201,169,110,.12);
+    --danger:#e05c5c; --success:#7fb069;
+    --r-sm:6px; --r:8px; --r-md:12px; --r-pill:999px;
+    --ease:cubic-bezier(.4,0,.2,1); --dur:200ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;min-height:100vh}
+a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+::selection{background:var(--accent-soft);color:var(--text-strong)}
 
-        .blog-card {
-            background: #fff; border-radius: 12px; padding: 1.5rem;
-            margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: 0.3s;
-        }
-        .blog-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .blog-title { margin: 0 0 1rem 0; color: #2d3748; font-size: 1.5rem; }
-        .blog-content { color: #4a5568; line-height: 1.6; }
-        .like-btn {
-            margin-top: 1rem; background: #e53e3e; padding: 0.5rem 1rem;
-        }
-        .like-btn:hover { background: #c53030; }
-    </style>
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;background:rgba(14,12,11,.92);backdrop-filter:saturate(150%) blur(12px);border-bottom:1px solid var(--border)}
+.nav-left{display:flex;align-items:center;gap:2rem}
+.brand{display:inline-flex;align-items:center;gap:.55rem;font-weight:700;font-size:1.05rem;color:var(--text-strong);letter-spacing:-.01em}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px rgba(232,132,92,.5)}
+.nav-links{display:flex;gap:.25rem}
+.nav-link{padding:.5rem .85rem;font-size:.86rem;color:var(--muted);border-radius:var(--r);transition:color var(--dur) var(--ease);position:relative}
+.nav-link:hover{color:var(--text)}
+.nav-link.active{color:var(--text-strong)}
+.nav-link.active::after{content:'';position:absolute;left:.85rem;right:.85rem;bottom:-.85rem;height:2px;background:var(--accent);border-radius:2px}
+.nav-right{display:flex;align-items:center;gap:.4rem}
+.avatar-sm{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--gold));display:grid;place-items:center;color:#1a0f08;font-weight:700;font-size:.82rem;cursor:pointer}
+
+main{max-width:1040px;margin:0 auto;padding:3rem 2rem 6rem}
+
+.hello{margin-bottom:2.5rem;display:flex;justify-content:space-between;align-items:flex-end;gap:2rem;flex-wrap:wrap}
+.hello h1{font-size:clamp(1.75rem,3.2vw,2.5rem);font-weight:700;color:var(--text-strong);letter-spacing:-.02em;line-height:1.15;margin-top:.65rem;text-wrap:balance}
+.hello p{color:var(--muted);font-size:.88rem;margin-top:.4rem}
+
+.search-wrap{position:relative;flex:1 1 320px;max-width:380px}
+.search{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);padding:.7rem 1rem .7rem 2.5rem;font-size:.88rem;transition:border-color var(--dur) var(--ease),background var(--dur) var(--ease)}
+.search::placeholder{color:var(--subtle)}
+.search:focus{outline:none;border-color:var(--accent);background:var(--surface-2)}
+.search-ico{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin:2.5rem 0 1.25rem}
+.section-head h2{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.section-head h2 strong{color:var(--gold);font-weight:600}
+
+/* Feed grid */
+.feed-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.card{display:block;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:1.25rem 1.5rem 1.4rem;transition:border-color var(--dur) var(--ease),transform var(--dur) var(--ease);cursor:pointer;position:relative}
+.card:hover{border-color:var(--border-bright);transform:translateY(-3px)}
+.card-head{display:flex;align-items:center;gap:.6rem;margin-bottom:.85rem;font-size:.78rem;color:var(--muted)}
+.card-avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--gold));display:grid;place-items:center;font-size:.7rem;font-weight:700;color:#1a0f08;flex-shrink:0}
+.card-author{color:var(--gold);font-weight:500}
+.card-dot{color:var(--subtle)}
+.card-title{font-size:1.35rem;font-weight:600;color:var(--text-strong);line-height:1.3;letter-spacing:-.012em;margin-bottom:.55rem;text-wrap:balance}
+.card-preview{font-size:.9rem;line-height:1.7;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:1rem}
+.card-foot{display:flex;align-items:center;justify-content:space-between;font-size:.78rem;color:var(--subtle)}
+.card-foot-left{display:flex;align-items:center;gap:.85rem}
+.card-foot-left span{display:inline-flex;align-items:center;gap:.32rem}
+
+/* Search results */
+.search-section{display:none}
+.search-section.show{display:block}
+.divider{display:flex;align-items:center;gap:1rem;margin:2rem 0 1.25rem}
+.divider .label{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.divider .line{flex:1;height:1px;background:var(--border)}
+.divider .count{font-size:.78rem;color:var(--subtle)}
+
+.author-row{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.author-card{display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:1rem 1.25rem;transition:border-color var(--dur) var(--ease);cursor:pointer}
+.author-card:hover{border-color:var(--border-bright)}
+.author-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--gold));flex-shrink:0;display:grid;place-items:center;color:#1a0f08;font-weight:700;font-size:1.05rem;overflow:hidden}
+.author-avatar img{width:100%;height:100%;object-fit:cover}
+.author-body{flex:1;min-width:0}
+.author-name{font-size:.95rem;font-weight:600;color:var(--text-strong);margin-bottom:.15rem}
+.author-meta{font-size:.78rem;color:var(--muted)}
+
+/* Empty / loading */
+.empty{grid-column:1/-1;text-align:center;padding:4rem 2rem}
+.empty-glyph{width:48px;height:48px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;margin:0 auto 1rem;color:var(--muted)}
+.empty h3{font-size:1.05rem;color:var(--text-strong);font-weight:600;margin-bottom:.4rem}
+.empty p{color:var(--muted);font-size:.88rem}
+.loading-msg{color:var(--muted);font-size:.9rem;text-align:center;padding:3rem}
+
+/* Like button */
+.like-btn{margin-top:.75rem;background:rgba(224,92,92,.12);color:var(--danger);border:1px solid rgba(224,92,92,.25);padding:.45rem 1rem;border-radius:var(--r-pill);font-size:.78rem;font-weight:500;transition:all var(--dur) var(--ease)}
+.like-btn:hover{background:rgba(224,92,92,.2)}
+
+@media(max-width:760px){.nav{padding:.85rem 1.25rem}.nav-links{display:none}main{padding:2rem 1.25rem 5rem}.feed-grid,.author-row{grid-template-columns:1fr}.hello{flex-direction:column;align-items:stretch}.search-wrap{max-width:none}}
+</style>
 </head>
 <body>
+<nav class="nav">
+    <div class="nav-left">
+        <a class="brand" href="/api/dashboard"><span class="brand-dot"></span> Lumen</a>
+        <div class="nav-links">
+            <a class="nav-link" href="/api/dashboard">Home</a>
+            <a class="nav-link active" href="/api/blogs/feed-ui">Feed</a>
+            <a class="nav-link" href="/api/blogs/create-ui">Write</a>
+        </div>
+    </div>
+    <div class="nav-right">
+        <a class="avatar-sm" href="/api/profile">M</a>
+    </div>
+</nav>
 
-<div class="container">
-    <a href="/api/dashboard" style="text-decoration:none; color: #4a90e2; font-weight: bold;">← Back to Dashboard</a>
-    <h1>✨ Your Personalized AI Feed</h1>
+<main>
+    <section class="hello">
+        <div>
+            <h1>Your personalized feed</h1>
+            <p>Stories recommended by AI based on your taste profile.</p>
+        </div>
+        <div class="search-wrap">
+            <span class="search-ico">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </span>
+            <input type="text" class="search" id="searchInput" placeholder="Semantic search: 'how to code in javascript'…">
+        </div>
+    </section>
 
-    <!-- AI Search Bar -->
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Try semantic search: 'How to code in javascript'">
-        <button onclick="searchBlogs()">AI Search</button>
+    <!-- Default feed view -->
+    <div id="defaultView">
+        <div class="section-head"><h2>Recommended <strong>for you</strong></h2></div>
+        <div class="feed-grid" id="feedContainer">
+            <div class="loading-msg" style="grid-column:1/-1">Loading recommendations…</div>
+        </div>
     </div>
 
-    <!-- Blog Container -->
-    <div id="feedContainer">
-        <!-- Blogs will be injected here via JavaScript -->
-        <p style="text-align:center;">Loading your recommendations...</p>
+    <!-- Search results -->
+    <div class="search-section" id="searchView">
+        <div class="divider">
+            <span class="label">Authors</span>
+            <span class="line"></span>
+            <span class="count" id="authorCount"></span>
+        </div>
+        <div class="author-row" id="authorResults"></div>
+
+        <div class="divider">
+            <span class="label">Stories</span>
+            <span class="line"></span>
+            <span class="count" id="blogCount"></span>
+        </div>
+        <div class="feed-grid" id="blogResults"></div>
     </div>
-</div>
+</main>
 
 <script>
-    // In your platform, you might be using cookies instead of localStorage for the token. 
-    // If auth fails, try removing the Authorization header in the fetch calls below!
-    const token = localStorage.getItem('token'); 
+    const token = localStorage.getItem('token');
 
     async function loadFeed() {
-        document.getElementById('feedContainer').innerHTML = "<p>Loading recommendations...</p>";
+        document.getElementById('feedContainer').innerHTML = '<div class="loading-msg" style="grid-column:1/-1">Loading recommendations…</div>';
         try {
             const response = await fetch('/api/blogs/feed', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -84,15 +164,20 @@
             const data = await response.json();
             displayBlogs(data.feed || []);
         } catch (error) {
-            console.error("Error loading feed", error);
+            console.error('Error loading feed', error);
+            document.getElementById('feedContainer').innerHTML = '<div class="empty" style="grid-column:1/-1"><p>Could not load feed. Is the server running?</p></div>';
         }
     }
 
     async function searchBlogs() {
-        const query = document.getElementById('searchInput').value;
-        if (!query) return loadFeed();
+        const query = document.getElementById('searchInput').value.trim();
+        if (!query) { showDefaultView(); return; }
 
-        document.getElementById('feedContainer').innerHTML = "<p>Searching blogs and authors...</p>";
+        document.getElementById('defaultView').style.display = 'none';
+        document.getElementById('searchView').classList.add('show');
+        document.getElementById('authorResults').innerHTML = '<div style="color:var(--muted);font-size:.88rem">Searching…</div>';
+        document.getElementById('blogResults').innerHTML = '<div class="loading-msg" style="grid-column:1/-1">Searching…</div>';
+
         try {
             const response = await fetch(`/api/blogs/search?q=${encodeURIComponent(query)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -100,52 +185,74 @@
             const data = await response.json();
             displaySearchResults(data.blogs || [], data.authors || []);
         } catch (error) {
-            console.error("Error searching", error);
+            console.error('Error searching', error);
         }
     }
 
-    function displaySearchResults(blogs, authors) {
-        const container = document.getElementById('feedContainer');
-        container.innerHTML = '';
+    function showDefaultView() {
+        document.getElementById('defaultView').style.display = 'block';
+        document.getElementById('searchView').classList.remove('show');
+    }
 
-        if (authors.length === 0 && blogs.length === 0) {
-            container.innerHTML = "<p style='text-align:center'>No results found.</p>";
+    function displaySearchResults(blogs, authors) {
+        document.getElementById('authorCount').textContent = authors.length + ' result' + (authors.length === 1 ? '' : 's');
+        document.getElementById('blogCount').textContent = blogs.length + ' result' + (blogs.length === 1 ? '' : 's');
+
+        const authorEl = document.getElementById('authorResults');
+        if (authors.length === 0) {
+            authorEl.innerHTML = '<div style="color:var(--muted);font-size:.88rem;padding:.5rem 0">No authors found.</div>';
+        } else {
+            authorEl.innerHTML = authors.map(author => `
+                <div class="author-card" onclick="window.location.href='/api/blogs/author-ui?id=${author.author_id}'">
+                    <div class="author-avatar">${escapeHtml(author.username.charAt(0).toUpperCase())}</div>
+                    <div class="author-body">
+                        <div class="author-name">${escapeHtml(author.username)}</div>
+                        <div class="author-meta">Member since ${new Date(author.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        displayBlogsInGrid(blogs, document.getElementById('blogResults'));
+    }
+
+    function displayBlogs(blogs) {
+        displayBlogsInGrid(blogs, document.getElementById('feedContainer'));
+    }
+
+    function displayBlogsInGrid(blogs, container) {
+        if (blogs.length === 0) {
+            container.innerHTML = `
+                <div class="empty">
+                    <div class="empty-glyph"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>
+                    <h3>No stories found</h3>
+                    <p>Try a different query or check back later.</p>
+                </div>`;
             return;
         }
-
-        if (authors.length > 0) {
-            const section = document.createElement('div');
-            section.innerHTML = `<h3 style="color:#a78bfa;margin-bottom:.75rem;">Authors</h3>`;
-            authors.forEach(author => {
-                const card = document.createElement('div');
-                card.className = 'blog-card';
-                card.style.cursor = 'pointer';
-                card.onclick = () => window.location.href = `/api/blogs/author-ui?id=${author.author_id}`;
-                card.innerHTML = `
-                    <h3 style="color:#2d3748;">👤 ${escapeHtml(author.username)}</h3>
-                    <p style="color:#718096;font-size:.85rem;">Member since ${new Date(author.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</p>
-                `;
-                section.appendChild(card);
-            });
-            container.appendChild(section);
-        }
-
-        if (blogs.length > 0) {
-            const section = document.createElement('div');
-            section.innerHTML = `<h3 style="color:#a78bfa;margin:.75rem 0;">Blogs</h3>`;
-            blogs.forEach(blog => {
-                const card = document.createElement('div');
-                card.className = 'blog-card';
-                card.innerHTML = `
-                    <h3 class="blog-title" style="cursor:pointer;" onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'">${escapeHtml(blog.title)}</h3>
-                    <p style="color:#64748b;font-size:.8rem;margin-bottom:.5rem;">by <a href="/api/blogs/author-ui?id=${blog.author_id}" style="color:#a78bfa;">${escapeHtml(blog.author || '')}</a></p>
-                    <div class="blog-content" style="cursor:pointer;" onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'">${escapeHtml((blog.content || '').substring(0, 300))}...</div>
-                    <button class="like-btn" onclick="likeBlog('${blog.blog_id}')">❤️ Like to tune profile</button>
-                `;
-                section.appendChild(card);
-            });
-            container.appendChild(section);
-        }
+        container.innerHTML = blogs.map(blog => {
+            const preview = (blog.content || '').substring(0, 180).replace(/<[^>]*>/g, '');
+            const initial = (blog.author || '?').charAt(0).toUpperCase();
+            const date = new Date(blog.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `
+                <div class="card" onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'">
+                    <div class="card-head">
+                        <div class="card-avatar">${escapeHtml(initial)}</div>
+                        <span class="card-author">${escapeHtml(blog.author || 'Unknown')}</span>
+                        <span class="card-dot">·</span>
+                        <span>${date}</span>
+                    </div>
+                    <h3 class="card-title">${escapeHtml(blog.title)}</h3>
+                    <p class="card-preview">${escapeHtml(preview)}${preview.length >= 180 ? '…' : ''}</p>
+                    <div class="card-foot">
+                        <div class="card-foot-left">
+                            <span>❤ ${blog.likes_count || 0}</span>
+                            <span>💬 ${blog.comments_count || 0}</span>
+                        </div>
+                    </div>
+                    <button class="like-btn" onclick="event.stopPropagation(); likeBlog('${blog.blog_id}')">❤ Like to tune feed</button>
+                </div>`;
+        }).join('');
     }
 
     function escapeHtml(text) {
@@ -160,39 +267,33 @@
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if(response.ok) {
-                alert("Liked! Your taste profile has been mathematically tuned!");
-                loadFeed(); // Reload the feed to show new recommendations!
+            if (response.ok) {
+                loadFeed();
             }
         } catch (error) {
-            console.error("Error liking blog", error);
+            console.error('Error liking blog', error);
         }
     }
 
-    function displayBlogs(blogs) {
-        const container = document.getElementById('feedContainer');
-        container.innerHTML = ""; // Clear loader
-        
-        if (blogs.length === 0) {
-            container.innerHTML = "<p style='text-align:center'>No blogs found.</p>";
-            return;
+    // Search on input with debounce
+    let searchTimer = null;
+    document.getElementById('searchInput').addEventListener('input', e => {
+        clearTimeout(searchTimer);
+        const q = e.target.value.trim();
+        if (!q) { showDefaultView(); return; }
+        searchTimer = setTimeout(searchBlogs, 350);
+    });
+
+    // ⌘K shortcut
+    document.addEventListener('keydown', e => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+        if (e.key === 'Escape' && document.activeElement === document.getElementById('searchInput')) {
+            document.getElementById('searchInput').value = '';
+            showDefaultView();
         }
+    });
 
-        blogs.forEach(blog => {
-            const card = document.createElement('div');
-            card.className = "blog-card";
-            card.innerHTML = `
-                <h3 class="blog-title" style="cursor:pointer;" onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'">${blog.title}</h3>
-                <div class="blog-content" style="cursor:pointer;" onclick="window.location.href='/api/blogs/read-ui?id=${blog.blog_id}'">${blog.content.substring(0, 300)}...</div>
-                <button class="like-btn" onclick="likeBlog('${blog.blog_id}')">❤️ Like to tune profile</button>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    // Load the feed automatically on page load
     loadFeed();
 </script>
-
 </body>
 </html>

@@ -23,6 +23,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans'
 a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 ::selection{background:var(--accent-soft);color:var(--text-strong)}
 
+/* Nav */
 .nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;background:rgba(14,12,11,.92);backdrop-filter:saturate(150%) blur(12px);border-bottom:1px solid var(--border)}
 .nav-left{display:flex;align-items:center;gap:2rem}
 .brand{display:inline-flex;align-items:center;gap:.55rem;font-weight:700;font-size:1.05rem;color:var(--text-strong);letter-spacing:-.01em}
@@ -33,8 +34,12 @@ a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;
 .nav-link.active{color:var(--text-strong)}
 .nav-link.active::after{content:'';position:absolute;left:.85rem;right:.85rem;bottom:-.85rem;height:2px;background:var(--accent);border-radius:2px}
 .nav-right{display:flex;align-items:center;gap:.4rem}
+.icon-btn{width:36px;height:36px;display:grid;place-items:center;color:var(--muted);border-radius:var(--r);transition:all var(--dur) var(--ease);position:relative}
+.icon-btn:hover{color:var(--text-strong);background:var(--surface)}
+.icon-btn .dot{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent);top:9px;right:9px}
 .avatar-sm{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--gold));display:grid;place-items:center;color:#1a0f08;font-weight:700;font-size:.82rem;cursor:pointer}
 
+/* Page */
 main{max-width:1040px;margin:0 auto;padding:3rem 2rem 6rem}
 .eyebrow{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;display:inline-flex;align-items:center;gap:.55rem}
 .eyebrow::before{content:'';width:18px;height:1px;background:var(--accent);opacity:.6}
@@ -44,10 +49,34 @@ main{max-width:1040px;margin:0 auto;padding:3rem 2rem 6rem}
 .hero h1 em{font-style:normal;color:var(--gold);font-weight:600}
 .hero p{color:var(--muted);font-size:.95rem;max-width:540px;margin-top:.5rem}
 
+/* Continue reading */
+.continue{display:grid;grid-template-columns:auto 1fr auto;gap:1.5rem;align-items:center;padding:1.5rem;background:linear-gradient(135deg,var(--surface) 0%,var(--surface-2) 100%);border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:3rem;transition:border-color var(--dur) var(--ease)}
+.continue:hover{border-color:var(--border-bright)}
+.continue-cover{width:64px;height:64px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:var(--r-md);display:grid;place-items:center;color:#1a0f08;font-weight:700;font-size:1.4rem;flex-shrink:0}
+.continue-body .label{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:.4rem}
+.continue-body h2{font-size:1.15rem;font-weight:600;color:var(--text-strong);line-height:1.3;margin-bottom:.4rem}
+.progress-bar{width:100%;max-width:280px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:.4rem}
+.progress-bar-fill{height:100%;background:var(--accent);width:62%}
+.continue-meta{font-size:.78rem;color:var(--muted)}
+.continue-cta{padding:.55rem 1.1rem;font-size:.82rem;font-weight:600;background:var(--accent);color:#1a0f08;border-radius:var(--r);transition:background var(--dur) var(--ease);white-space:nowrap}
+.continue-cta:hover{background:var(--accent-press)}
+
+/* Stats */
 .section-head{display:flex;align-items:baseline;justify-content:space-between;margin:2.5rem 0 1.25rem}
 .section-head h2{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .section-head h2 strong{color:var(--gold);font-weight:600}
+.section-head a{font-size:.82rem;color:var(--muted);transition:color var(--dur) var(--ease)}
+.section-head a:hover{color:var(--accent)}
 
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
+.stat{padding:1.25rem 1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);transition:border-color var(--dur) var(--ease)}
+.stat:hover{border-color:var(--border-bright)}
+.stat-label{font-size:.72rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.stat-value{font-size:1.75rem;font-weight:700;color:var(--text-strong);letter-spacing:-.018em;font-variant-numeric:tabular-nums;line-height:1}
+.stat-delta{font-size:.76rem;color:var(--subtle);margin-top:.4rem}
+.stat-delta.up{color:var(--success)}
+
+/* Actions */
 .actions{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:.75rem}
 .action{display:block;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);position:relative;transition:all var(--dur) var(--ease);min-height:175px}
 .action:hover{border-color:var(--border-bright);transform:translateY(-3px)}
@@ -63,61 +92,78 @@ main{max-width:1040px;margin:0 auto;padding:3rem 2rem 6rem}
 .action-primary .action-arrow{color:#1a0f08}
 .action:hover .action-arrow{transform:translateX(3px)}
 
+/* Activity */
 .recent-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .recent-card{padding:1.4rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md)}
-.recent-label{font-size:.78rem;color:var(--muted);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600}
 .recent-item{display:flex;align-items:center;gap:.85rem;padding:.7rem 0;border-bottom:1px solid var(--border)}
 .recent-item:last-child{border-bottom:none}
 .recent-item .ico{width:32px;height:32px;flex-shrink:0;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;color:var(--gold);font-size:.85rem}
 .recent-item .body{flex:1;min-width:0}
 .recent-item .title{font-size:.88rem;font-weight:500;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .recent-item .sub{font-size:.76rem;color:var(--muted);margin-top:.15rem}
-.recent-item .when{font-size:.73rem;color:var(--subtle)}
+.recent-item .when{font-size:.73rem;color:var(--subtle);font-variant-numeric:tabular-nums}
 
-.logout-row{text-align:center;margin-top:3rem;font-size:.85rem}
-.logout-row a{color:var(--danger);transition:opacity var(--dur) var(--ease)}
-.logout-row a:hover{opacity:.75}
-
-@media(max-width:760px){.nav{padding:.85rem 1.25rem}.nav-links{display:none}main{padding:2rem 1.25rem 5rem}.actions,.recent-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.nav{padding:.85rem 1.25rem}.nav-links{display:none}main{padding:2rem 1.25rem 5rem}.stats{grid-template-columns:repeat(2,1fr)}.actions,.recent-grid{grid-template-columns:1fr}.continue{grid-template-columns:auto 1fr;gap:1rem}.continue-cta{grid-column:1/-1;justify-self:start}}
 </style>
 </head>
 <body>
 <nav class="nav">
     <div class="nav-left">
-        <a class="brand" href="/api/dashboard"><span class="brand-dot"></span> Lumen</a>
+        <a class="brand" href="dashboard.html"><span class="brand-dot"></span> Lumen</a>
         <div class="nav-links">
-            <a class="nav-link active" href="/api/dashboard">Home</a>
-            <a class="nav-link" href="/api/blogs/feed-ui">Feed</a>
-            <a class="nav-link" href="/api/blogs/create-ui">Write</a>
+            <a class="nav-link active" href="dashboard.html">Home</a>
+            <a class="nav-link" href="feed.html">Feed</a>
+            <a class="nav-link" href="create-blog.html">Write</a>
         </div>
     </div>
     <div class="nav-right">
-        <a class="avatar-sm" href="/api/profile" id="navAvatar">?</a>
+        <button class="icon-btn" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+        <button class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="dot"></span></button>
+        <a class="avatar-sm" href="profile.html">M</a>
     </div>
 </nav>
 
 <main>
     <header class="hero">
-        <span class="eyebrow">Welcome back</span>
-        <h1>Hello, <em id="greetingName">there</em>. What are you writing today?</h1>
-        <p>Your personalized feed and drafts are ready.</p>
+        <span class="eyebrow">Friday morning</span>
+        <h1>Welcome back, Maya. <em>Pick up where you left off.</em></h1>
+        <p>You’re on a 4-day reading streak. Two new stories from authors you follow.</p>
     </header>
+
+    <a class="continue" href="read-blog.html">
+        <div class="continue-cover">N</div>
+        <div class="continue-body">
+            <div class="label">Continue reading</div>
+            <h2>Notes from a year without notifications</h2>
+            <div class="progress-bar"><div class="progress-bar-fill"></div></div>
+            <div class="continue-meta">62% · about 4 minutes left · by Maya Lin</div>
+        </div>
+        <span class="continue-cta">Resume →</span>
+    </a>
+
+    <div class="section-head"><h2>Your <strong>writing</strong></h2></div>
+    <div class="stats">
+        <div class="stat"><div class="stat-label">Stories</div><div class="stat-value">14</div><div class="stat-delta up">+1 this week</div></div>
+        <div class="stat"><div class="stat-label">Followers</div><div class="stat-value">1,284</div><div class="stat-delta up">+24 this week</div></div>
+        <div class="stat"><div class="stat-label">Total likes</div><div class="stat-value">8,247</div><div class="stat-delta up">+156</div></div>
+        <div class="stat"><div class="stat-label">Reading streak</div><div class="stat-value">4d</div><div class="stat-delta">Don’t break it</div></div>
+    </div>
 
     <div class="section-head"><h2>Quick <strong>actions</strong></h2></div>
     <div class="actions">
-        <a class="action action-primary" href="/api/blogs/create-ui">
+        <a class="action action-primary" href="create-blog.html">
             <div class="action-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-9A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20h11a2.5 2.5 0 0 0 2.5-2.5v-7"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.5 9.5 14 10l.5-3.5z"/></svg></div>
             <h3>Start a new story</h3>
             <p>An empty page. Just title and content. The good stuff.</p>
             <span class="action-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
         </a>
-        <a class="action" href="/api/blogs/feed-ui">
+        <a class="action" href="feed.html">
             <div class="action-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>
             <h3>Browse feed</h3>
-            <p>AI-curated stories and semantic search.</p>
+            <p>11 new stories curated for you today.</p>
             <span class="action-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
         </a>
-        <a class="action" href="/api/profile">
+        <a class="action" href="profile.html">
             <div class="action-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <h3>Your profile</h3>
             <p>Drafts, saved stories, edit details.</p>
@@ -125,108 +171,21 @@ main{max-width:1040px;margin:0 auto;padding:3rem 2rem 6rem}
         </a>
     </div>
 
-    <div class="section-head"><h2>Recent <strong>activity</strong></h2></div>
+    <div class="section-head"><h2>Recent <strong>activity</strong></h2><a href="#">See all →</a></div>
     <div class="recent-grid">
         <div class="recent-card">
-            <div class="recent-label">Notifications</div>
-            <div id="recentNotifs"><div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">Loading…</div></div>
+            <div style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600">From people</div>
+            <div class="recent-item"><div class="ico">❤</div><div class="body"><div class="title">Iris Chen liked your story</div><div class="sub">"On finishing things"</div></div><div class="when">2h</div></div>
+            <div class="recent-item"><div class="ico">💬</div><div class="body"><div class="title">Theo Vance commented</div><div class="sub">"This hit me hard. Saving for re-read."</div></div><div class="when">5h</div></div>
+            <div class="recent-item"><div class="ico">＋</div><div class="body"><div class="title">Daniel Okafor followed you</div><div class="sub">View profile</div></div><div class="when">1d</div></div>
         </div>
         <div class="recent-card">
-            <div class="recent-label">Your drafts</div>
-            <div id="recentDrafts"><div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">Loading…</div></div>
+            <div style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600">Your work</div>
+            <div class="recent-item"><div class="ico">✓</div><div class="body"><div class="title">"Why slow software is winning"</div><div class="sub">Draft saved · 1,240 words</div></div><div class="when">1d</div></div>
+            <div class="recent-item"><div class="ico">📈</div><div class="body"><div class="title">"On finishing things" reached 800 likes</div><div class="sub">A milestone</div></div><div class="when">2d</div></div>
+            <div class="recent-item"><div class="ico">🔖</div><div class="body"><div class="title">You saved 3 new stories</div><div class="sub">View library</div></div><div class="when">3d</div></div>
         </div>
     </div>
-
-    <div class="logout-row"><a href="/api/auth/logout">Sign out</a></div>
 </main>
-
-<script>
-async function loadGreeting() {
-    try {
-        const res = await fetch('/api/auth/me');
-        if (res.ok) {
-            const data = await res.json();
-            document.getElementById('greetingName').textContent = data.username;
-            document.getElementById('navAvatar').textContent = data.username.charAt(0).toUpperCase();
-        }
-    } catch (e) {}
-}
-
-async function loadRecentNotifs() {
-    const el = document.getElementById('recentNotifs');
-    try {
-        const res = await fetch('/api/blogs/notifications');
-        if (!res.ok) { el.innerHTML = '<div style="color:var(--muted);font-size:.85rem">No notifications yet</div>'; return; }
-        const data = await res.json();
-        if (!data.notifications || data.notifications.length === 0) {
-            el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">No notifications yet</div>';
-            return;
-        }
-        el.innerHTML = data.notifications.slice(0, 3).map(n => {
-            const icon = n.type === 'like' ? '❤' : '💬';
-            const action = n.type === 'like' ? 'liked your blog' : 'commented on';
-            const time = timeAgo(new Date(n.created_at));
-            return `<div class="recent-item">
-                <div class="ico">${icon}</div>
-                <div class="body">
-                    <div class="title">${escapeHtml(n.actor_name)} ${action}</div>
-                    <div class="sub">"${escapeHtml(n.blog_title || 'Untitled')}"</div>
-                </div>
-                <div class="when">${time}</div>
-            </div>`;
-        }).join('');
-    } catch (e) {
-        el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">No notifications yet</div>';
-    }
-}
-
-async function loadRecentDrafts() {
-    const el = document.getElementById('recentDrafts');
-    try {
-        const res = await fetch('/api/blogs/my-drafts');
-        if (!res.ok) { el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">No drafts yet</div>'; return; }
-        const data = await res.json();
-        if (!data.drafts || data.drafts.length === 0) {
-            el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">No drafts yet. <a href="/api/blogs/create-ui" style="color:var(--accent)">Start writing →</a></div>';
-            return;
-        }
-        el.innerHTML = data.drafts.slice(0, 3).map(d => {
-            const date = timeAgo(new Date(d.updated_at || d.created_at));
-            return `<a class="recent-item" href="/api/blogs/create-ui?draft_id=${d.blog_id}" style="display:flex;align-items:center;gap:.85rem;padding:.7rem 0;border-bottom:1px solid var(--border);text-decoration:none">
-                <div class="ico">✎</div>
-                <div class="body">
-                    <div class="title">${escapeHtml(d.title || 'Untitled')}</div>
-                    <div class="sub">Draft · edited ${date}</div>
-                </div>
-                <div class="when">${date}</div>
-            </a>`;
-        }).join('');
-    } catch (e) {
-        el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">No drafts yet</div>';
-    }
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text || '';
-    return div.innerHTML;
-}
-
-function timeAgo(date) {
-    const seconds = Math.floor((new Date() - date) / 1000);
-    if (seconds < 60) return 'just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return minutes + 'm ago';
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return hours + 'h ago';
-    const days = Math.floor(hours / 24);
-    if (days < 7) return days + 'd ago';
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-loadGreeting();
-loadRecentNotifs();
-loadRecentDrafts();
-</script>
 </body>
 </html>

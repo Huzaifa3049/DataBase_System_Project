@@ -1,624 +1,425 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Blog Post</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        h2 {
-            margin: 0;
-            color: #333;
-        }
-        .save-status {
-            font-size: 0.8rem;
-            color: #999;
-        }
-        .save-status.saving { color: #e6a817; }
-        .save-status.saved { color: #28a745; }
-        .save-status.error { color: #dc3545; }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #666;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .content-editor {
-            width: 100%;
-            min-height: 250px;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            outline: none;
-            font-family: inherit;
-            font-size: 1rem;
-            line-height: 1.6;
-            overflow-y: auto;
-        }
-        .content-editor:focus {
-            border-color: #007bff;
-        }
-        .content-editor img {
-            max-width: 100%;
-            border-radius: 4px;
-            margin: 0.5rem 0;
-        }
-        .paste-hint {
-            font-size: 0.75rem;
-            color: #999;
-            margin-top: 0.25rem;
-        }
-        .content-editor:empty:before {
-            content: attr(data-placeholder);
-            color: #aaa;
-            pointer-events: none;
-        }
-        .button-row {
-            display: flex;
-            gap: 0.75rem;
-        }
-        button {
-            flex: 1;
-            padding: 0.75rem;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.2s;
-        }
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .btn-publish {
-            background-color: #007bff;
-        }
-        .btn-publish:hover:not(:disabled) {
-            background-color: #0056b3;
-        }
-        .btn-save {
-            background-color: #6c757d;
-        }
-        .btn-save:hover:not(:disabled) {
-            background-color: #545b62;
-        }
-        #message {
-            margin-top: 1rem;
-            padding: 0.75rem;
-            border-radius: 4px;
-            display: none;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            display: block !important;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            display: block !important;
-        }
-        .version-info {
-            font-size: 0.8rem;
-            color: #999;
-            text-align: right;
-            margin-top: 0.5rem;
-        }
-        /* Draft resume banner */
-        .draft-banner {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 6px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            display: none;
-        }
-        .draft-banner p {
-            margin: 0 0 0.75rem 0;
-            font-size: 0.9rem;
-            color: #856404;
-        }
-        .draft-banner button {
-            padding: 0.4rem 0.75rem;
-            font-size: 0.85rem;
-            border-radius: 4px;
-            margin-right: 0.5rem;
-        }
-        .btn-resume {
-            background-color: #ffc107;
-            color: #333;
-        }
-        .btn-resume:hover {
-            background-color: #e0a800;
-        }
-        .btn-dismiss {
-            background-color: #eee;
-            color: #666;
-        }
-        .btn-dismiss:hover {
-            background-color: #ddd;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Story — Lumen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#0e0c0b; --surface:#1a1714; --surface-2:#221d19;
+    --border:#2e2a27; --border-bright:#3d3630;
+    --text:#d4cdc7; --text-strong:#ece5df; --muted:#7a736d; --subtle:#5a534d;
+    --accent:#e8845c; --accent-soft:rgba(232,132,92,.10); --accent-press:#d97249;
+    --gold:#c9a96e;
+    --danger:#e05c5c; --success:#7fb069; --warn:#f59e0b;
+    --shadow-md:0 8px 24px rgba(0,0,0,.35);
+    --r-sm:6px; --r:8px; --r-md:12px; --r-pill:999px;
+    --ease:cubic-bezier(.4,0,.2,1); --dur:200ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text-strong);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh}
+a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 
-        /* Version History Sidebar */
-        .version-btn {
-            background: #e2e8f0;
-            color: #4a5568;
-            padding: 0.4rem 0.8rem;
-            border-radius: 4px;
-            cursor: pointer;
-            border: none;
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: background 0.2s;
-            margin-left: 1rem;
-        }
-        .version-btn:hover {
-            background: #cbd5e0;
-        }
-        .version-sidebar {
-            position: fixed;
-            top: 0;
-            right: -320px;
-            width: 300px;
-            height: 100vh;
-            background: white;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
-            z-index: 1001;
-            transition: right 0.3s ease;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-        }
-        .version-sidebar.open {
-            right: 0;
-        }
-        .version-sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #f4f7f6;
-            padding-bottom: 1rem;
-            margin-bottom: 1rem;
-        }
-        .version-sidebar-header h3 {
-            margin: 0;
-            font-size: 1.2rem;
-            color: #2d3748;
-        }
-        .close-sidebar-btn {
-            background: none;
-            border: none;
-            font-size: 1.8rem;
-            line-height: 1;
-            cursor: pointer;
-            color: #a0aec0;
-            padding: 0;
-        }
-        .close-sidebar-btn:hover {
-            color: #4a5568;
-        }
-        .version-list {
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-        .version-item {
-            padding: 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            margin-bottom: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .version-item:hover {
-            background: #f7fafc;
-            border-color: #cbd5e0;
-        }
-        .version-item .v-number {
-            font-weight: 600;
-            color: #4a90e2;
-            margin-bottom: 0.25rem;
-        }
-        .version-item .v-date {
-            font-size: 0.8rem;
-            color: #718096;
-        }
-    </style>
+/* Nav */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;background:rgba(14,12,11,.92);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--border)}
+.nav-left{display:flex;align-items:center;gap:1rem}
+.nav-brand{display:flex;align-items:center;gap:.65rem;font-weight:700;font-size:1.05rem}
+.nav-brand-mark{width:28px;height:28px;border-radius:var(--r);background:var(--accent);display:grid;place-items:center;font-weight:800;font-size:.9rem;color:#fff}
+.nav-divider{width:1px;height:22px;background:var(--border)}
+.nav-context{font-size:.875rem;color:var(--muted)}
+.save-status{display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--subtle);font-variant-numeric:tabular-nums}
+.save-status .dot{width:6px;height:6px;border-radius:50%;background:var(--subtle)}
+.save-status.saving .dot{background:var(--warn);animation:pulse 1.2s infinite}
+.save-status.saved .dot{background:var(--success)}
+.save-status.error .dot{background:var(--danger)}
+@keyframes pulse{50%{opacity:.4}}
+.nav-right{display:flex;align-items:center;gap:.6rem}
+.btn-ghost{padding:.55rem 1.05rem;font-size:.85rem;font-weight:500;color:var(--muted);border-radius:var(--r-pill);transition:all var(--dur) var(--ease)}
+.btn-ghost:hover{color:var(--text-strong);background:var(--surface-2)}
+.btn-primary{padding:.55rem 1.4rem;font-size:.85rem;font-weight:600;border-radius:var(--r-pill);background:var(--accent);color:#fff;transition:all var(--dur) var(--ease)}
+.btn-primary:hover{transform:translateY(-1px);background:var(--accent-press)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* Editor */
+.editor-wrap{max-width:760px;margin:0 auto;padding:4rem 2rem 6rem}
+.draft-banner{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.2);border-radius:var(--r-md);margin-bottom:2rem}
+.draft-banner-ico{width:36px;height:36px;border-radius:50%;background:rgba(201,169,110,.12);color:var(--gold);display:grid;place-items:center;flex-shrink:0}
+.draft-banner-body{flex:1;min-width:0}
+.draft-banner-body strong{font-size:.92rem}
+.draft-banner-body p{font-size:.82rem;color:var(--muted);margin-top:.15rem}
+.draft-banner-actions{display:flex;gap:.5rem}
+
+#title{
+    width:100%;background:transparent;border:none;outline:none;
+    color:var(--text-strong);font-size:clamp(2rem,5vw,3rem);font-weight:700;
+    letter-spacing:-.025em;line-height:1.15;padding:.5rem 0;margin-bottom:1rem;font-family:inherit;
+}
+#title::placeholder{color:var(--subtle)}
+
+.content-editor{
+    min-height:60vh;background:transparent;border:none;outline:none;
+    color:var(--text);font-family:'Newsreader',serif;font-size:1.18rem;
+    line-height:1.8;padding:.5rem 0;word-wrap:break-word;
+}
+.content-editor:empty::before{content:attr(data-placeholder);color:var(--subtle);pointer-events:none;font-style:italic}
+.content-editor img{max-width:100%;border-radius:var(--r-md);margin:.5rem 0;border:1px solid var(--border)}
+.content-editor p{margin-bottom:1.5rem}
+
+.editor-foot{display:flex;align-items:center;justify-content:space-between;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:.82rem;color:var(--subtle)}
+.foot-left{display:flex;gap:1.5rem}
+.foot-tip{display:inline-flex;align-items:center;gap:.4rem}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(120%);background:var(--surface-2);border:1px solid var(--border-bright);color:var(--text-strong);padding:.85rem 1.4rem;border-radius:var(--r-pill);font-size:.9rem;box-shadow:var(--shadow-md);transition:transform 350ms var(--ease);z-index:100;display:flex;align-items:center;gap:.5rem}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.success .ico{color:var(--success)}
+.toast.error .ico{color:var(--danger)}
+
+/* Version sidebar */
+.sidebar{position:fixed;top:0;right:-380px;width:360px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:200;transition:right 300ms var(--ease);display:flex;flex-direction:column}
+.sidebar.open{right:0}
+.sidebar-head{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sidebar-head h3{font-size:1rem;font-weight:600}
+.sidebar-close{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted);font-size:1.4rem;transition:all var(--dur) var(--ease)}
+.sidebar-close:hover{background:var(--surface-2);color:var(--text-strong)}
+.sidebar-body{flex:1;overflow-y:auto;padding:1rem 1.25rem}
+.version-item{padding:1rem;border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer;transition:all var(--dur) var(--ease)}
+.version-item:hover{background:var(--surface-2);border-color:var(--border-bright)}
+.version-num{font-size:.92rem;font-weight:600;color:var(--accent);margin-bottom:.15rem}
+.version-date{font-size:.78rem;color:var(--muted)}
+
+/* Message banner */
+#message{margin-top:1rem;padding:.75rem 1rem;border-radius:var(--r-md);display:none;font-size:.88rem}
+#message.success{display:block;background:rgba(127,176,105,.12);border:1px solid rgba(127,176,105,.3);color:var(--success)}
+#message.error{display:block;background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.25);color:var(--danger)}
+.version-info{font-size:.78rem;color:var(--subtle);text-align:right;margin-top:.5rem}
+
+@media(max-width:760px){.editor-wrap{padding:2rem 1.25rem 5rem}.nav{padding:.85rem 1.25rem}.nav-context{display:none}.sidebar{width:100%;right:-100%}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header" style="display: flex; align-items: center;">
-            <h2 style="margin: 0;">Create New Blog</h2>
-            <button class="version-btn" id="btnToggleVersions" style="display: none;">View History</button>
-            <span class="save-status" id="saveStatus" style="margin-left: auto;"></span>
-        </div>
+<nav class="nav">
+    <div class="nav-left">
+        <a href="/api/dashboard" class="nav-brand"><div class="nav-brand-mark">L</div><span>Lumen</span></a>
+        <div class="nav-divider"></div>
+        <div class="nav-context">New story</div>
+        <div class="save-status saved" id="saveStatus"><span class="dot"></span><span id="saveText">Saved</span></div>
+    </div>
+    <div class="nav-right">
+        <button class="btn-ghost" id="btnToggleVersions" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+            History
+        </button>
+        <button class="btn-ghost" id="btnSaveDraft">Save draft</button>
+        <button class="btn-primary" id="btnPublish">Publish</button>
+    </div>
+</nav>
 
-        <div class="draft-banner" id="draftBanner">
+<div class="editor-wrap">
+    <div class="draft-banner" id="draftBanner" style="display:none">
+        <div class="draft-banner-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10l4 2"/><circle cx="12" cy="12" r="10"/></svg></div>
+        <div class="draft-banner-body">
+            <strong>You have an unsaved draft</strong>
             <p id="draftBannerText"></p>
-            <button class="btn-resume" id="btnResume">Resume Draft</button>
-            <button class="btn-dismiss" id="btnDismiss">Start Fresh</button>
         </div>
-
-        <form id="blogForm">
-            <div class="form-group">
-                <label for="title">Title</label>
-                <input type="text" id="title" placeholder="Enter blog title" required>
-            </div>
-            <div class="form-group">
-                <label for="content">Content</label>
-                <div id="content" class="content-editor" contenteditable="true" data-placeholder="Write your blog content here..."></div>
-                <p class="paste-hint">💡 Paste images directly into the editor</p>
-            </div>
-            <div class="button-row">
-                <button type="button" class="btn-save" id="btnSaveDraft">Save Draft</button>
-                <button type="submit" class="btn-publish" id="btnPublish">Publish Blog</button>
-            </div>
-        </form>
-        <div class="version-info" id="versionInfo"></div>
-        <div id="message"></div>
-        <div style="text-align: center; margin-top: 1rem;">
-            <a href="/api/dashboard" style="color: #007bff; text-decoration: none;">Back to Dashboard</a>
+        <div class="draft-banner-actions">
+            <button class="btn-ghost" id="btnDismiss">Dismiss</button>
+            <button class="btn-primary" id="btnResume">Resume</button>
         </div>
     </div>
 
-    <!-- Version History Sidebar -->
-    <div class="version-sidebar" id="versionSidebar">
-        <div class="version-sidebar-header">
-            <h3>Version History</h3>
-            <button class="close-sidebar-btn" id="btnCloseSidebar">&times;</button>
+    <input id="title" type="text" placeholder="Title" />
+    <div id="content" class="content-editor" contenteditable="true" data-placeholder="Tell your story…"></div>
+
+    <div class="editor-foot">
+        <div class="foot-left">
+            <span class="foot-tip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Paste images directly</span>
+            <span class="foot-tip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg> Autosaves every 2s</span>
         </div>
-        <div class="version-list" id="versionList">
-            <p style="color: #666; font-size: 0.9rem;">Select a draft first to see versions.</p>
-        </div>
+        <span id="wordCount">0 words</span>
     </div>
+    <div class="version-info" id="versionInfo"></div>
+    <div id="message"></div>
+</div>
 
-    <script>
-        let currentBlogId = null;
-        let currentVersionId = null;
-        let currentVersionNumber = 0;
-        let saveTimer = null;
-        let isSaving = false;
-        let pendingDraft = null; // stores draft data from /my-drafts for resume
+<!-- Version sidebar -->
+<aside class="sidebar" id="versionSidebar">
+    <div class="sidebar-head">
+        <h3>Version history</h3>
+        <button class="sidebar-close" id="btnCloseSidebar">&times;</button>
+    </div>
+    <div class="sidebar-body" id="versionList">
+        <p style="color:var(--muted);font-size:.88rem">Save a checkpoint to start tracking versions.</p>
+    </div>
+</aside>
 
-        const titleInput = document.getElementById('title');
-        const contentInput = document.getElementById('content');
-        const saveStatus = document.getElementById('saveStatus');
-        const versionInfo = document.getElementById('versionInfo');
-        const messageDiv = document.getElementById('message');
-        const versionSidebar = document.getElementById('versionSidebar');
-        const btnToggleVersions = document.getElementById('btnToggleVersions');
-        const btnCloseSidebar = document.getElementById('btnCloseSidebar');
-        const versionListDiv = document.getElementById('versionList');
+<div class="toast" id="toast"><span class="ico">✓</span><span id="toastMsg"></span></div>
 
-        // --- Version Sidebar Logic ---
-        btnToggleVersions.addEventListener('click', () => {
-            versionSidebar.classList.add('open');
-            fetchVersions();
-        });
+<script>
+    let currentBlogId = null;
+    let currentVersionId = null;
+    let currentVersionNumber = 0;
+    let saveTimer = null;
+    let isSaving = false;
+    let pendingDraft = null;
 
-        btnCloseSidebar.addEventListener('click', () => {
-            versionSidebar.classList.remove('open');
-        });
+    const titleInput = document.getElementById('title');
+    const contentInput = document.getElementById('content');
+    const saveStatusEl = document.getElementById('saveStatus');
+    const saveTextEl = document.getElementById('saveText');
+    const versionInfo = document.getElementById('versionInfo');
+    const messageDiv = document.getElementById('message');
+    const versionSidebar = document.getElementById('versionSidebar');
+    const btnToggleVersions = document.getElementById('btnToggleVersions');
+    const btnCloseSidebar = document.getElementById('btnCloseSidebar');
+    const versionListDiv = document.getElementById('versionList');
 
-        async function fetchVersions() {
-            if (!currentBlogId) return;
-            versionListDiv.innerHTML = '<p style="color: #666; font-size: 0.9rem;">Loading backend data...</p>';
+    function updateStatus(state, text) {
+        saveStatusEl.className = 'save-status ' + state;
+        saveTextEl.textContent = text;
+    }
 
-            try {
-                const res = await fetch(`/api/blogs/${currentBlogId}/versions`);
-                const data = await res.json();
-                if (res.ok) {
-                    renderVersionList(data.versions);
-                } else {
-                    versionListDiv.innerHTML = '<p style="color: #dc3545; font-size: 0.9rem;">Failed to load versions.</p>';
-                }
-            } catch (err) {
-                console.error(err);
-                versionListDiv.innerHTML = '<p style="color: #dc3545; font-size: 0.9rem;">Error connecting to server.</p>';
-            }
+    function showToast(msg, kind = 'success') {
+        const t = document.getElementById('toast');
+        t.className = 'toast ' + kind + ' show';
+        t.querySelector('.ico').textContent = kind === 'error' ? '!' : '✓';
+        document.getElementById('toastMsg').textContent = msg;
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function updateWordCount() {
+        const text = (contentInput.innerText || '').trim();
+        const n = text ? text.split(/\s+/).length : 0;
+        document.getElementById('wordCount').textContent = n + (n === 1 ? ' word' : ' words');
+    }
+
+    function showMessage(text, type) {
+        messageDiv.textContent = text;
+        messageDiv.className = type;
+        if (type === 'success') setTimeout(() => { messageDiv.style.display = 'none'; }, 3000);
+    }
+
+    // Version sidebar
+    btnToggleVersions.addEventListener('click', () => {
+        versionSidebar.classList.add('open');
+        fetchVersions();
+    });
+    btnCloseSidebar.addEventListener('click', () => versionSidebar.classList.remove('open'));
+
+    async function fetchVersions() {
+        if (!currentBlogId) return;
+        versionListDiv.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Loading…</p>';
+        try {
+            const res = await fetch(`/api/blogs/${currentBlogId}/versions`);
+            const data = await res.json();
+            if (res.ok) renderVersionList(data.versions);
+            else versionListDiv.innerHTML = '<p style="color:var(--danger);font-size:.88rem">Failed to load versions.</p>';
+        } catch (err) {
+            versionListDiv.innerHTML = '<p style="color:var(--danger);font-size:.88rem">Error connecting to server.</p>';
         }
+    }
 
-        function renderVersionList(versions) {
-            if (!versions || versions.length === 0) {
-                versionListDiv.innerHTML = '<p style="color: #666; font-size: 0.9rem;">No previous versions found.</p>';
-                return;
-            }
-            versionListDiv.innerHTML = versions.map(v => `
-                <div class="version-item" onclick="loadSpecificVersion(${v.version_number})">
-                    <div class="v-number">Version ${v.version_number}</div>
-                    <div class="v-date">${new Date(v.created_at).toLocaleString()}</div>
-                </div>
-            `).join('');
+    function renderVersionList(versions) {
+        if (!versions || versions.length === 0) {
+            versionListDiv.innerHTML = '<p style="color:var(--muted);font-size:.88rem">No previous versions found.</p>';
+            return;
         }
+        versionListDiv.innerHTML = versions.map(v => `
+            <div class="version-item" onclick="loadSpecificVersion(${v.version_number})">
+                <div class="version-num">Version ${v.version_number}</div>
+                <div class="version-date">${new Date(v.created_at).toLocaleString()}</div>
+            </div>
+        `).join('');
+    }
 
-        async function loadSpecificVersion(vNum) {
-            try {
-                const res = await fetch(`/api/blogs/${currentBlogId}/versions/${vNum}`);
-                const data = await res.json();
-                if (res.ok) {
-                    titleInput.value = data.title || '';
-                    contentInput.innerHTML = data.content || '';
-                    
-                    // Close the sidebar automatically
-                    versionSidebar.classList.remove('open');
-                    
-                    // Manually schedule save so this restores automatically
-                    scheduleAutoSave();
-                    showMessage('Version ' + vNum + ' restored!', 'success');
-                } else {
-                    alert('Error: ' + (data.error || 'Failed to load version content.'));
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Connection error loading version content.');
+    async function loadSpecificVersion(vNum) {
+        try {
+            const res = await fetch(`/api/blogs/${currentBlogId}/versions/${vNum}`);
+            const data = await res.json();
+            if (res.ok) {
+                titleInput.value = data.title || '';
+                contentInput.innerHTML = data.content || '';
+                versionSidebar.classList.remove('open');
+                scheduleAutoSave();
+                showMessage('Version ' + vNum + ' restored!', 'success');
+            } else {
+                alert('Error: ' + (data.error || 'Failed to load version content.'));
             }
+        } catch (err) {
+            alert('Connection error loading version content.');
         }
+    }
 
-        // --- Auto-save: debounce on every keystroke ---
-        function scheduleAutoSave() {
-            clearTimeout(saveTimer);
-            saveTimer = setTimeout(saveDraft, 2000);
-            saveStatus.textContent = 'Unsaved changes...';
-            saveStatus.className = 'save-status';
-        }
+    // Auto-save
+    function scheduleAutoSave() {
+        clearTimeout(saveTimer);
+        updateStatus('saving', 'Saving…');
+        saveTimer = setTimeout(() => saveDraft(false), 2000);
+        updateWordCount();
+    }
 
-        // Placeholder behaviour for contenteditable
-        contentInput.addEventListener('focus', () => {
-            if (contentInput.innerHTML === '') contentInput.dataset.empty = 'true';
-        });
-        contentInput.addEventListener('blur', () => {
-            contentInput.dataset.empty = contentInput.innerHTML === '' ? 'true' : 'false';
-        });
+    contentInput.addEventListener('focus', () => { if (contentInput.innerHTML === '') contentInput.dataset.empty = 'true'; });
+    contentInput.addEventListener('blur', () => { contentInput.dataset.empty = contentInput.innerHTML === '' ? 'true' : 'false'; });
 
-        // Paste handler — converts pasted images to inline base64
-        contentInput.addEventListener('paste', (e) => {
-            const items = e.clipboardData && e.clipboardData.items;
-            if (!items) return;
-            for (const item of items) {
-                if (item.type.startsWith('image/')) {
-                    e.preventDefault();
-                    const file = item.getAsFile();
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const img = document.createElement('img');
-                        img.src = event.target.result;
-                        img.style.maxWidth = '100%';
-                        // Insert at cursor position
-                        const sel = window.getSelection();
-                        if (sel && sel.rangeCount) {
-                            const range = sel.getRangeAt(0);
-                            range.deleteContents();
-                            range.insertNode(img);
-                            range.setStartAfter(img);
-                            range.collapse(true);
-                            sel.removeAllRanges();
-                            sel.addRange(range);
-                        } else {
-                            contentInput.appendChild(img);
-                        }
-                        scheduleAutoSave();
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
-        });
-
-        titleInput.addEventListener('input', scheduleAutoSave);
-        contentInput.addEventListener('input', scheduleAutoSave);
-
-        // --- Save draft ---
-        // createVersion = false → auto-save (UPDATE latest version in-place, fast)
-        // createVersion = true  → manual save (INSERT new version checkpoint, with AI embedding)
-        async function saveDraft(createVersion = false) {
-            const title = titleInput.value.trim();
-            const content = contentInput.innerHTML.trim();
-
-            if (!title && !content) return;
-            if (isSaving) return;
-
-            isSaving = true;
-            saveStatus.textContent = createVersion ? 'Creating checkpoint...' : 'Auto-saving...';
-            saveStatus.className = 'save-status saving';
-
-            try {
-                const response = await fetch('/api/blogs/save-draft', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        blog_id: currentBlogId,
-                        title,
-                        content,
-                        create_version: createVersion
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    currentBlogId = result.blog_id;
-                    currentVersionNumber = result.version_number;
-
-                    if (result.is_new_version) {
-                        saveStatus.textContent = 'Version ' + result.version_number + ' saved ✓';
-                        showMessage('Version ' + result.version_number + ' checkpoint created!', 'success');
+    // Paste images as base64
+    contentInput.addEventListener('paste', (e) => {
+        const items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                e.preventDefault();
+                const file = item.getAsFile();
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    const sel = window.getSelection();
+                    if (sel && sel.rangeCount) {
+                        const range = sel.getRangeAt(0);
+                        range.deleteContents();
+                        range.insertNode(img);
+                        range.setStartAfter(img);
+                        range.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
                     } else {
-                        saveStatus.textContent = 'Draft saved';
+                        contentInput.appendChild(img);
                     }
-                    saveStatus.className = 'save-status saved';
-                    versionInfo.textContent = 'Version ' + currentVersionNumber;
-                    btnToggleVersions.style.display = 'block';
-
-                    setTimeout(() => {
-                        if (saveStatus.className.includes('saved')) {
-                            saveStatus.textContent = '';
-                        }
-                    }, 5000);
-                } else {
-                    saveStatus.textContent = 'Save failed';
-                    saveStatus.className = 'save-status error';
-                }
-            } catch (err) {
-                saveStatus.textContent = 'Save failed - offline?';
-                saveStatus.className = 'save-status error';
-                console.error(err);
-            } finally {
-                isSaving = false;
+                    scheduleAutoSave();
+                };
+                reader.readAsDataURL(file);
             }
         }
+    });
 
-        // --- Manual save button → creates a NEW version checkpoint ---
-        document.getElementById('btnSaveDraft').addEventListener('click', () => {
-            clearTimeout(saveTimer);
-            saveDraft(true);  // true = create_version = INSERT new version
-        });
+    titleInput.addEventListener('input', scheduleAutoSave);
+    contentInput.addEventListener('input', scheduleAutoSave);
 
-        // --- Publish ---
-        document.getElementById('blogForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            clearTimeout(saveTimer);
-
-            const title = titleInput.value.trim();
-            const content = contentInput.innerHTML.trim();
-
-            if (!title || !content) {
-                showMessage('Title and content are required to publish.', 'error');
-                return;
-            }
-
-            // Save the latest draft first if we don't have a blog yet
-            if (!currentBlogId) {
-                await saveDraft();
-            }
-
-            if (!currentBlogId) {
-                showMessage('Failed to save draft before publishing.', 'error');
-                return;
-            }
-
-            // Save one more time to capture any final changes
-            await saveDraft();
-
-            try {
-                const response = await fetch('/api/blogs/publish/' + currentBlogId, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('Blog published successfully!', 'success');
-                    // Reset for a new blog
-                    currentBlogId = null;
-                    currentVersionId = null;
-                    currentVersionNumber = 0;
-                    versionInfo.textContent = '';
-                    saveStatus.textContent = '';
-                    titleInput.value = '';
-                    contentInput.innerHTML = '';
+    async function saveDraft(createVersion = false) {
+        const title = titleInput.value.trim();
+        const content = contentInput.innerHTML.trim();
+        if (!title && !content) return;
+        if (isSaving) return;
+        isSaving = true;
+        updateStatus('saving', createVersion ? 'Creating checkpoint…' : 'Auto-saving…');
+        try {
+            const response = await fetch('/api/blogs/save-draft', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ blog_id: currentBlogId, title, content, create_version: createVersion })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                currentBlogId = result.blog_id;
+                currentVersionNumber = result.version_number;
+                if (result.is_new_version) {
+                    updateStatus('saved', 'Version ' + result.version_number + ' saved');
+                    showToast('Checkpoint v' + result.version_number + ' created');
                 } else {
-                    showMessage(result.message || result.error || 'Failed to publish', 'error');
+                    updateStatus('saved', 'Saved');
                 }
-            } catch (err) {
-                showMessage('Connection failed. Is the server running?', 'error');
-                console.error(err);
+                versionInfo.textContent = 'Version ' + currentVersionNumber;
+                btnToggleVersions.style.display = 'inline-flex';
+                setTimeout(() => { if (saveStatusEl.className.includes('saved')) updateStatus('saved', 'Saved'); }, 5000);
+            } else {
+                updateStatus('error', 'Save failed');
             }
-        });
-
-        // --- Draft resume on page load ---
-        async function checkForDrafts() {
-            try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const draftIdParam = urlParams.get('draft_id');
-
-                const response = await fetch('/api/blogs/my-drafts');
-                const result = await response.json();
-
-                if (response.ok && result.drafts && result.drafts.length > 0) {
-                    if (draftIdParam) {
-                        const targetDraft = result.drafts.find(d => d.blog_id === draftIdParam);
-                        if (targetDraft) {
-                            currentBlogId = targetDraft.blog_id;
-                            titleInput.value = targetDraft.title || '';
-                            contentInput.innerHTML = targetDraft.content || '';
-                            saveStatus.textContent = 'Draft loaded';
-                            saveStatus.className = 'save-status saved';
-                            btnToggleVersions.style.display = 'block';
-                            return;
-                        }
-                    }
-
-                    pendingDraft = result.drafts[0]; // most recent draft
-                    const banner = document.getElementById('draftBanner');
-                    const bannerText = document.getElementById('draftBannerText');
-                    bannerText.textContent = 'You have an unsaved draft: "' + (pendingDraft.title || 'Untitled') + '". Resume editing?';
-                    banner.style.display = 'block';
-                }
-            } catch (err) {
-                console.error('Could not check for drafts:', err);
-            }
+        } catch (err) {
+            updateStatus('error', 'Save failed – offline?');
+        } finally {
+            isSaving = false;
         }
+    }
 
-        document.getElementById('btnResume').addEventListener('click', () => {
-            if (pendingDraft) {
-                currentBlogId = pendingDraft.blog_id;
-                titleInput.value = pendingDraft.title || '';
-                contentInput.innerHTML = pendingDraft.content || '';
-                document.getElementById('draftBanner').style.display = 'none';
-                saveStatus.textContent = 'Draft loaded';
-                saveStatus.className = 'save-status saved';
-                btnToggleVersions.style.display = 'block';
+    // Manual save → creates new version checkpoint
+    document.getElementById('btnSaveDraft').addEventListener('click', () => {
+        clearTimeout(saveTimer);
+        saveDraft(true);
+    });
+
+    // Publish
+    document.getElementById('btnPublish').addEventListener('click', async () => {
+        const title = titleInput.value.trim();
+        const content = contentInput.innerHTML.trim();
+        if (!title || !content) { showMessage('Title and content are required to publish.', 'error'); return; }
+        document.getElementById('btnPublish').disabled = true;
+        if (!currentBlogId) await saveDraft(false);
+        if (!currentBlogId) { showMessage('Failed to save draft before publishing.', 'error'); document.getElementById('btnPublish').disabled = false; return; }
+        await saveDraft(false);
+        try {
+            const response = await fetch('/api/blogs/publish/' + currentBlogId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+            if (response.ok) {
+                showMessage('Blog published successfully!', 'success');
+                showToast('Published — your story is live');
+                currentBlogId = null; currentVersionId = null; currentVersionNumber = 0;
+                versionInfo.textContent = ''; titleInput.value = ''; contentInput.innerHTML = '';
+                updateStatus('saved', 'Saved');
+            } else {
+                showMessage(result.message || result.error || 'Failed to publish', 'error');
             }
-        });
+        } catch (err) {
+            showMessage('Connection failed. Is the server running?', 'error');
+        }
+        document.getElementById('btnPublish').disabled = false;
+    });
 
-        document.getElementById('btnDismiss').addEventListener('click', () => {
-            pendingDraft = null;
+    // Draft resume on page load
+    async function checkForDrafts() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const draftIdParam = urlParams.get('draft_id');
+            const response = await fetch('/api/blogs/my-drafts');
+            const result = await response.json();
+            if (response.ok && result.drafts && result.drafts.length > 0) {
+                if (draftIdParam) {
+                    const targetDraft = result.drafts.find(d => d.blog_id === draftIdParam);
+                    if (targetDraft) {
+                        currentBlogId = targetDraft.blog_id;
+                        titleInput.value = targetDraft.title || '';
+                        contentInput.innerHTML = targetDraft.content || '';
+                        updateStatus('saved', 'Draft loaded');
+                        btnToggleVersions.style.display = 'inline-flex';
+                        updateWordCount();
+                        return;
+                    }
+                }
+                pendingDraft = result.drafts[0];
+                const banner = document.getElementById('draftBanner');
+                document.getElementById('draftBannerText').textContent = 'You have an unsaved draft: "' + (pendingDraft.title || 'Untitled') + '". Resume editing?';
+                banner.style.display = 'flex';
+            }
+        } catch (err) {
+            console.error('Could not check for drafts:', err);
+        }
+    }
+
+    document.getElementById('btnResume').addEventListener('click', () => {
+        if (pendingDraft) {
+            currentBlogId = pendingDraft.blog_id;
+            titleInput.value = pendingDraft.title || '';
+            contentInput.innerHTML = pendingDraft.content || '';
             document.getElementById('draftBanner').style.display = 'none';
-        });
-
-        function showMessage(text, type) {
-            messageDiv.textContent = (type === 'success' ? '' : '') + ' ' + text;
-            messageDiv.className = type;
-            if (type === 'success') {
-                setTimeout(() => { messageDiv.style.display = 'none'; }, 3000);
-            }
+            updateStatus('saved', 'Draft loaded');
+            btnToggleVersions.style.display = 'inline-flex';
+            updateWordCount();
         }
+    });
 
-        // Check for drafts on page load
-        checkForDrafts();
-    </script>
+    document.getElementById('btnDismiss').addEventListener('click', () => {
+        pendingDraft = null;
+        document.getElementById('draftBanner').style.display = 'none';
+    });
+
+    checkForDrafts();
+    updateWordCount();
+</script>
 </body>
 </html>
