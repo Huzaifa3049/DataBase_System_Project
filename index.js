@@ -15,13 +15,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware - must come BEFORE routes
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: process.env.NODE_ENV === 'production'
+        ? process.env.ALLOWED_ORIGIN || true
+        : 'http://localhost:3000',
     credentials: true
 }));
 app.use(helmet({
