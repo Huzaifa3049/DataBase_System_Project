@@ -18,6 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware - must come BEFORE routes
+app.use((req, res, next) => { console.log(`[REQ] ${req.method} ${req.path}`); next(); });
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
