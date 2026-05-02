@@ -1,37 +1,25 @@
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
+import { Resend } from 'resend';
 import redis from '../redis.js';
 
-dotenv.config();
-
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000);
+    return Math.floor(100000 + Math.random() * 900000);
 }
 
 async function send_and_generate_OTP(email) {
     const otp = generateOTP();
 
-    // Store OTP in Redis with 5-minute TTL (auto-expires, no cleanup needed)
     await redis.set(`otp:${email}`, otp, 'EX', 300);
 
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'OTP FOR SIGNUP',
-        text: `Your OTP for signup is: ${otp}`
-    };
-
     try {
-        await transporter.sendMail(mailOptions);
-        console.log('OTP email sent successfully');
+        await resend.emails.send({
+            from: 'Lumen <onboarding@resend.dev>',
+            to: email,
+            subject: 'Your Lumen verification code',
+            text: `Your verification code is: ${otp}\n\nThis code expires in 5 minutes.`,
+        });
+        console.log('OTP email sent successfully to', email);
         return { success: true, message: 'OTP sent to email' };
     } catch (error) {
         console.error('Error sending OTP email:', error);
