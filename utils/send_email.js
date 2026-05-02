@@ -1,7 +1,13 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import redis from '../redis.js';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
 
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000);
@@ -41,18 +47,18 @@ async function send_and_generate_OTP(email) {
     }
 
     try {
-        const sendPromise = resend.emails.send({
-            from: 'Lumen <onboarding@resend.dev>',
+        const sendPromise = transporter.sendMail({
+            from: process.env.EMAIL_USER,
             to: email,
             subject: 'Your Lumen verification code',
             text: `Your verification code is: ${otp}\n\nThis code expires in 5 minutes.`,
         });
-        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout after 8s')), 8000));
-        const result = await Promise.race([sendPromise, timeout]);
-        console.log(`[OTP] Resend response:`, JSON.stringify(result));
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout after 10s')), 10000));
+        await Promise.race([sendPromise, timeout]);
+        console.log(`[OTP] Email sent successfully to ${email}`);
         return { success: true, message: 'OTP sent to email' };
     } catch (error) {
-        console.error(`[OTP] Resend failed:`, error.message);
+        console.error(`[OTP] Email failed:`, error.message);
         return { success: false, message: error.message || 'Failed to send OTP' };
     }
 }
