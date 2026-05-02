@@ -1,13 +1,7 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import redis from '../redis.js';
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000);
@@ -47,8 +41,8 @@ async function send_and_generate_OTP(email) {
     }
 
     try {
-        const sendPromise = transporter.sendMail({
-            from: process.env.EMAIL_USER,
+        const sendPromise = resend.emails.send({
+            from: 'Lumen <onboarding@resend.dev>',
             to: email,
             subject: 'Your Lumen verification code',
             text: `Your verification code is: ${otp}\n\nThis code expires in 5 minutes.`,
