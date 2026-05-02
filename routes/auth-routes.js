@@ -582,10 +582,13 @@ function verify_email(email) {
 
 // Step 1: Send OTP and store signup data
 router.post('/signup-request', async (req, res, next) => {
+    console.log('[SIGNUP] Request received', req.body?.email);
     const ip = req.ip || req.connection.remoteAddress;
+    console.log('[SIGNUP] Checking rate limit for', ip);
     if (await checkRateLimit(`signup:${ip}`, 3, 60)) {
         return res.status(429).json({ message: 'Too many signup attempts. Try again in 1 minute.' });
     }
+    console.log('[SIGNUP] Rate limit passed');
 
     let { username, email, password, confirm_password } = req.body;
     
