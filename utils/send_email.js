@@ -30,7 +30,7 @@ function redisDel(key) {
 
 async function send_and_generate_OTP(email) {
     const otp = generateOTP();
-    console.log(`[OTP] Generating OTP for ${email}`);
+    console.log(`[OTP] Generating OTP for ${email} — code: ${otp}`);
 
     try {
         await redisSet(`otp:${email}`, otp, 300);
