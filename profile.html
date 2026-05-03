@@ -209,7 +209,7 @@ input{font-family:inherit}
     // --- Load profile ---
     async function loadProfile() {
         try {
-            const res = await fetch('/api/auth/profile');
+            const res = await fetch('/api/auth/profile', { credentials: 'include' });
             const data = await res.json();
             if (res.ok) {
                 const user = data.user;
@@ -218,12 +218,23 @@ input{font-family:inherit}
                 document.getElementById('editUsername').value = user.username;
                 document.getElementById('editEmail').value = user.email;
                 renderAvatar(user.profile_picture, user.username);
+                loadFollowStats(user.id);
             } else {
                 window.location.href = '/api/auth/login';
             }
         } catch (err) {
             console.error('Error loading profile:', err);
         }
+    }
+
+    async function loadFollowStats(userId) {
+        try {
+            const res = await fetch(`/api/follow/${userId}/stats`);
+            if (!res.ok) return;
+            const stats = await res.json();
+            document.getElementById('statFollowers').textContent = stats.followers;
+            document.getElementById('statFollowing').textContent = stats.following;
+        } catch (err) { /* ignore */ }
     }
 
     function renderAvatar(url, username) {
@@ -330,7 +341,7 @@ input{font-family:inherit}
     async function loadPublished() {
         const panel = document.getElementById('panel-published');
         try {
-            const res = await fetch('/api/blogs/my-published');
+            const res = await fetch('/api/blogs/my-published', { credentials: 'include' });
             const data = await res.json();
             if (res.ok && data.blogs.length > 0) {
                 document.getElementById('statStories').textContent = data.blogs.length;
@@ -346,7 +357,7 @@ input{font-family:inherit}
     async function loadDrafts() {
         const panel = document.getElementById('panel-drafts');
         try {
-            const res = await fetch('/api/blogs/my-drafts');
+            const res = await fetch('/api/blogs/my-drafts', { credentials: 'include' });
             const data = await res.json();
             if (res.ok && data.drafts.length > 0) {
                 panel.innerHTML = data.drafts.map(d => blogEntry(d, 'draft')).join('');
@@ -361,7 +372,7 @@ input{font-family:inherit}
     async function loadLiked() {
         const panel = document.getElementById('panel-liked');
         try {
-            const res = await fetch('/api/blogs/my-liked');
+            const res = await fetch('/api/blogs/my-liked', { credentials: 'include' });
             const data = await res.json();
             if (res.ok && data.blogs.length > 0) {
                 panel.innerHTML = data.blogs.map(b => blogEntry(b, 'liked')).join('');
@@ -376,7 +387,7 @@ input{font-family:inherit}
     async function loadSaved() {
         const panel = document.getElementById('panel-saved');
         try {
-            const res = await fetch('/api/blogs/my-saved');
+            const res = await fetch('/api/blogs/my-saved', { credentials: 'include' });
             const data = await res.json();
             if (res.ok && data.blogs.length > 0) {
                 panel.innerHTML = data.blogs.map(b => blogEntry(b, 'saved')).join('');
