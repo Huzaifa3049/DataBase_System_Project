@@ -128,10 +128,17 @@ a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;
     }
 
     async function loadFollowState(currentUserId) {
-        if (!currentUserId || currentUserId === parseInt(authorId)) return;
-
         const res = await fetch(`/api/follow/${authorId}/stats`);
         const stats = await res.json();
+
+        const statsEl = document.getElementById('authorStats');
+        const firstStat = statsEl.querySelector('.stat');
+        const firstHtml = firstStat ? firstStat.outerHTML : '';
+        statsEl.innerHTML = `${firstHtml}
+            <div class="stat"><div class="num">${stats.followers}</div><div class="lbl">Followers</div></div>
+            <div class="stat"><div class="num">${stats.following}</div><div class="lbl">Following</div></div>`;
+
+        if (!currentUserId || currentUserId === parseInt(authorId)) return;
 
         const checkRes = await fetch(`/api/follow/${authorId}/is-following`, { credentials: 'include' });
         if (checkRes.ok) {
@@ -141,13 +148,6 @@ a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;
 
         updateFollowButton();
         document.getElementById('followSection').style.display = 'block';
-
-        const statsEl = document.getElementById('authorStats');
-        const firstStat = statsEl.querySelector('.stat');
-        const firstHtml = firstStat ? firstStat.outerHTML : '';
-        statsEl.innerHTML = `${firstHtml}
-            <div class="stat"><div class="num">${stats.followers}</div><div class="lbl">Followers</div></div>
-            <div class="stat"><div class="num">${stats.following}</div><div class="lbl">Following</div></div>`;
     }
 
     function updateFollowButton() {

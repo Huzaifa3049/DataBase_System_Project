@@ -216,7 +216,7 @@ a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;
 
     async function loadSaveState() {
         try {
-            const res = await fetch('/api/blogs/my-saved');
+            const res = await fetch('/api/blogs/my-saved', { credentials: 'include' });
             if (!res.ok) return;
             const data = await res.json();
             isSaved = data.blogs.some(b => b.blog_id === blogId);
@@ -234,7 +234,7 @@ a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;
     async function toggleSave() {
         try {
             const method = isSaved ? 'DELETE' : 'POST';
-            const res = await fetch(`/api/blogs/save/${blogId}`, { method });
+            const res = await fetch(`/api/blogs/save/${blogId}`, { method, credentials: 'include' });
             if (res.ok) { isSaved = !isSaved; updateSaveUI(); }
         } catch (err) { console.error('Error toggling save:', err); }
     }
