@@ -451,12 +451,13 @@ input{font-family:inherit}
     // --- Notifications ---
     async function loadNotifications() {
         try {
-            const res = await fetch('/api/blogs/notifications');
+            const res = await fetch('/api/blogs/notifications?limit=20', { credentials: 'include' });
             if (!res.ok) return;
             const data = await res.json();
             const badge = document.getElementById('notifBadge');
             if (data.unread_count > 0) {
                 badge.classList.add('show');
+                badge.title = data.unread_count + ' unread';
             } else {
                 badge.classList.remove('show');
             }
@@ -465,11 +466,14 @@ input{font-family:inherit}
                 list.innerHTML = '<div class="notif-empty">No notifications yet</div>';
                 return;
             }
-            list.innerHTML = data.notifications.map(n => {
-                const icon = n.type === 'like' ? '❤' : '💬';
-                const action = n.type === 'like' ? 'liked your blog' : 'commented on your blog';
+            const items = data.notifications.map(n => {
+                const icon = n.type === 'like' ? '❤️' : '💬';
+                const action = n.type === 'like' ? 'liked your blog' : 'commented on';
                 const time = timeAgo(new Date(n.created_at));
-                return `<a class="notif-item ${!n.is_read ? 'unread' : ''}" href="/api/blogs/read-ui?id=${n.blog_id}">
+                const href = n.type === 'comment'
+                    ? `/api/blogs/read-ui?id=${n.blog_id}&comments=open`
+                    : `/api/blogs/read-ui?id=${n.blog_id}`;
+                return `<a class="notif-item ${!n.is_read ? 'unread' : ''}" href="${href}">
                     <div class="notif-ico">${icon}</div>
                     <div class="notif-body">
                         <div class="notif-text"><strong>${escapeHtml(n.actor_name)}</strong> ${action} <em>"${escapeHtml(n.blog_title || 'Untitled')}"</em></div>
@@ -477,16 +481,45 @@ input{font-family:inherit}
                     </div>
                 </a>`;
             }).join('');
+            const viewAll = data.pagination && data.pagination.total > 20
+                ? `<a class="notif-item" href="#" onclick="loadMoreNotifications(event)" style="justify-content:center;font-size:.82rem;color:var(--accent)">View all ${data.pagination.total} notifications</a>`
+                : '';
+            list.innerHTML = items + viewAll;
         } catch (err) {
             console.error('Error loading notifications:', err);
         }
+    }
+
+    async function loadMoreNotifications(e) {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/blogs/notifications?limit=100', { credentials: 'include' });
+            if (!res.ok) return;
+            const data = await res.json();
+            const list = document.getElementById('notifList');
+            list.innerHTML = data.notifications.map(n => {
+                const icon = n.type === 'like' ? '❤️' : '💬';
+                const action = n.type === 'like' ? 'liked your blog' : 'commented on';
+                const time = timeAgo(new Date(n.created_at));
+                const href = n.type === 'comment'
+                    ? `/api/blogs/read-ui?id=${n.blog_id}&comments=open`
+                    : `/api/blogs/read-ui?id=${n.blog_id}`;
+                return `<a class="notif-item ${!n.is_read ? 'unread' : ''}" href="${href}">
+                    <div class="notif-ico">${icon}</div>
+                    <div class="notif-body">
+                        <div class="notif-text"><strong>${escapeHtml(n.actor_name)}</strong> ${action} <em>"${escapeHtml(n.blog_title || 'Untitled')}"</em></div>
+                        <div class="notif-when">${time}</div>
+                    </div>
+                </a>`;
+            }).join('');
+        } catch (err) { console.error(err); }
     }
 
     function toggleNotifDropdown() {
         const dropdown = document.getElementById('notifDropdown');
         const isOpen = dropdown.classList.toggle('open');
         if (isOpen) {
-            fetch('/api/blogs/notifications/read', { method: 'PATCH' })
+            fetch('/api/blogs/notifications/read', { method: 'PATCH', credentials: 'include' })
                 .then(() => {
                     document.getElementById('notifBadge').classList.remove('show');
                     document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));

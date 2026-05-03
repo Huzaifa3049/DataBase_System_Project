@@ -329,7 +329,14 @@ a{color:inherit;text-decoration:none} button{font-family:inherit;cursor:pointer;
         } catch (err) { console.error('Error deleting comment:', err); }
     }
 
-    loadBlog();
+    loadBlog().then(() => {
+        if (params.get('comments') === 'open') {
+            commentsOpen = true;
+            const section = document.getElementById('commentsSection');
+            section.style.display = 'block';
+            setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+        }
+    });
 </script>
 </body>
 </html>
