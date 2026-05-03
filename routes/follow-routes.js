@@ -4,7 +4,6 @@ import authenticateToken from '../middleware/authorization.js';
 
 const router = express.Router();
 
-// POST /api/follow/:targetUserId
 router.post('/:targetUserId', authenticateToken, async (req, res, next) => {
     const followerId = req.user.id;
     const { targetUserId } = req.params;
@@ -24,7 +23,6 @@ router.post('/:targetUserId', authenticateToken, async (req, res, next) => {
     }
 });
 
-// DELETE /api/follow/:targetUserId
 router.delete('/:targetUserId', authenticateToken, async (req, res, next) => {
     const followerId = req.user.id;
     const { targetUserId } = req.params;
@@ -40,7 +38,6 @@ router.delete('/:targetUserId', authenticateToken, async (req, res, next) => {
     }
 });
 
-// GET /api/follow/:userId/is-following
 router.get('/:userId/is-following', authenticateToken, async (req, res, next) => {
     const followerId = req.user.id;
     const { userId } = req.params;
@@ -56,7 +53,6 @@ router.get('/:userId/is-following', authenticateToken, async (req, res, next) =>
     }
 });
 
-// GET /api/follow/:userId/stats
 router.get('/:userId/stats', async (req, res, next) => {
     const { userId } = req.params;
 

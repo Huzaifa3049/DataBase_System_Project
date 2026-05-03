@@ -9,7 +9,6 @@ const client = new Client({
 
 await client.connect();
 
-// 1. Check users.id type
 const colRes = await client.query(`
   SELECT column_name, data_type, udt_name
   FROM information_schema.columns
@@ -17,7 +16,6 @@ const colRes = await client.query(`
 `);
 console.log('users.id type:', colRes.rows[0]);
 
-// 2. List all tables
 const tabRes = await client.query(`
   SELECT table_name
   FROM information_schema.tables
@@ -26,7 +24,6 @@ const tabRes = await client.query(`
 `);
 console.log('Tables:', tabRes.rows.map(r => r.table_name).join(', '));
 
-// 3. Check follows table if it exists
 const fRes = await client.query(`
   SELECT column_name, data_type FROM information_schema.columns
   WHERE table_name = 'follows' ORDER BY ordinal_position

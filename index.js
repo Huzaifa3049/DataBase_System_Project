@@ -17,7 +17,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Middleware - must come BEFORE routes
 app.use((req, res, next) => { console.log(`[REQ] ${req.method} ${req.path}`); next(); });
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
@@ -28,10 +27,9 @@ app.use(cors({
     credentials: true
 }));
 app.use(helmet({
-    contentSecurityPolicy: false  // inline scripts in server-rendered HTML — CSP needs nonces to work here
+    contentSecurityPolicy: false 
 }));
 
-// Local uploads served only in development (production uses Cloudinary)
 if (process.env.NODE_ENV !== 'production') {
     app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 }
@@ -39,32 +37,26 @@ app.use('/api/auth', router);
 app.use('/api/blogs', blog_router);
 app.use('/api/follow', follow_router);
 
-// Serve the dashboard UI
 app.get('/api/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
-// Serve the blog writing UI
 app.get('/api/blogs/create-ui', (req, res) => {
     res.sendFile(path.join(__dirname, 'create-blog.html'));
 });
 
-// Serve the feed UI
 app.get('/api/blogs/feed-ui', (req, res) => {
     res.sendFile(path.join(__dirname, 'feed.html'));
 });
 
-// Serve the blog reader UI
 app.get('/api/blogs/read-ui', (req, res) => {
     res.sendFile(path.join(__dirname, 'read-blog.html'));
 });
 
-// Serve the profile UI
 app.get('/api/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'profile.html'));
 });
 
-// Serve the author page UI
 app.get('/api/blogs/author-ui', (req, res) => {
     res.sendFile(path.join(__dirname, 'author.html'));
 });
@@ -145,8 +137,6 @@ a{color:inherit;text-decoration:none}
 </html>`);
 });
 
-// Centralized error handler — any route that calls next(err) lands here.
-// 4-parameter signature is how Express identifies error-handling middleware.
 app.use((err, req, res, next) => {
     console.error(err.stack || err.message || err);
     const status = err.status || err.statusCode || 500;

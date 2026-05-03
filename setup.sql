@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS follows (
 CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
 
 CREATE TABLE IF NOT EXISTS saved_blogs (
-    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     blog_id    UUID NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (user_id, blog_id)

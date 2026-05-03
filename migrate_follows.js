@@ -1,11 +1,3 @@
-/**
- * migrate_follows.js
- * ------------------
- * Adds the `follows` table (and its index) to db_course_project.
- * Safe to re-run — uses IF NOT EXISTS.
- *
- * Usage:  node migrate_follows.js
- */
 
 import pg from 'pg';
 const { Client } = pg;
@@ -22,7 +14,7 @@ await client.connect();
 console.log('✅ Connected to db_course_project');
 
 try {
-  // users.id is INTEGER (SERIAL), so follower_id / following_id must be INT
+ 
   await client.query(`
     CREATE TABLE IF NOT EXISTS follows (
       follower_id  INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -40,7 +32,7 @@ try {
   `);
   console.log('✅ idx_follows_following index created (or already existed)');
 
-  // Verify
+ 
   const res = await client.query(`
     SELECT column_name, data_type
     FROM information_schema.columns

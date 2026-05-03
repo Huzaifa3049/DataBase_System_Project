@@ -2,7 +2,7 @@ import pool from './db.js';
 
 async function migrate() {
     try {
-        // 1. Auto-update updated_at trigger
+       
         await pool.query(`
             CREATE OR REPLACE FUNCTION update_blog_updated_at()
             RETURNS TRIGGER AS $$
@@ -21,7 +21,7 @@ async function migrate() {
         `);
         console.log('✅ updated_at trigger created');
 
-        // 2. Sync likes_count trigger
+       
         await pool.query(`
             CREATE OR REPLACE FUNCTION sync_likes_count()
             RETURNS TRIGGER AS $$
@@ -45,7 +45,7 @@ async function migrate() {
         `);
         console.log('✅ likes_count trigger created');
 
-        // 3. Sync comments_count trigger
+       
         await pool.query(`
             CREATE OR REPLACE FUNCTION sync_comments_count()
             RETURNS TRIGGER AS $$
@@ -69,7 +69,7 @@ async function migrate() {
         `);
         console.log('✅ comments_count trigger created');
 
-        // 4. Additional indexes
+       
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_blogs_author ON blogs(author_id)`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_blogs_published ON blogs(is_published, is_deleted)`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_blog_likes_blog ON blog_likes(blog_id)`);

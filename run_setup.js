@@ -1,13 +1,3 @@
-/**
- * run_setup.js
- * ------------
- * Runs setup.sql against your PostgreSQL database.
- * Usage:  node run_setup.js
- *
- * Make sure the database 'db_course_project' already exists.
- * If it doesn't, run this first (one time):
- *   node run_setup.js --create-db
- */
 
 import pg from 'pg';
 import fs from 'fs';
@@ -26,7 +16,7 @@ const DB_CONFIG = {
 };
 
 async function createDatabaseIfNeeded() {
-  // Connect to the default 'postgres' database to issue CREATE DATABASE
+ 
   const client = new Client({ ...DB_CONFIG, database: 'postgres' });
   await client.connect();
   const result = await client.query(

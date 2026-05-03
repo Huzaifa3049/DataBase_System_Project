@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(psql -U postgres -d db_course_project -c \"ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;\")"
+      "Bash(psql -U postgres -d db_course_project -c \"ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;\")",
+      "Bash(npm install *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(curl *)",
+      "Bash(node --check routes/Blog-Writing.js)",
+      "Bash(node --check index.js)",
+      "Bash(node --check routes/auth-routes.js)",
+      "Bash(node --check routes/follow-routes.js)"
     ]
   }
 }

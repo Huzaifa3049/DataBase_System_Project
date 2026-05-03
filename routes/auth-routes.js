@@ -235,7 +235,7 @@ h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;t
     async function handleSignupStep2(e) {
         e.preventDefault();
         const btn = document.getElementById('step2Btn');
-        // handled in handleSignupStep1
+       
     }
 </script>
 </body>
@@ -469,8 +469,8 @@ router.post('/login', async (req, res, next) => {
             return res.status(401).json({ message: 'Invalid password' });
         }
         const tokens = jwToken.jwtToken(user.rows[0].id, user.rows[0].username);
-        // Register the refresh token's jti in Redis — this is what rotation checks against.
-        // Key: rt:{jti}  Value: userId  TTL: 7 days (matches token expiry)
+       
+       
         await redis.set(`rt:${tokens.jti}`, user.rows[0].id, 'EX', 7 * 24 * 60 * 60);
         res.cookie('accessToken', tokens.Accesstoken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Strict', maxAge: 15 * 60 * 1000 });
         res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
@@ -488,7 +488,7 @@ router.post('/refresh', async (req, res, next) => {
         return res.status(401).json({ message: 'No refresh token. Please log in.' });
     }
 
-    // Step 1: Verify the JWT signature and expiry
+   
     let payload;
     try {
         payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || 'refresh_secret');
@@ -498,11 +498,11 @@ router.post('/refresh', async (req, res, next) => {
 
     const { id, username, jti } = payload;
 
-    // Step 2: Check if this jti is still registered in Redis
-    // If it's gone, one of two things happened:
-    //   a) The user already logged out (jti was deleted on logout)
-    //   b) This token was already used once and rotated — meaning someone is reusing an old token
-    // Either way, the correct response is to force re-login
+   
+   
+   
+   
+   
     const stored = await redis.get(`rt:${jti}`);
     if (!stored) {
         res.clearCookie('accessToken');
@@ -510,10 +510,10 @@ router.post('/refresh', async (req, res, next) => {
         return res.status(401).json({ message: 'Session expired or reuse detected. Please log in again.' });
     }
 
-    // Step 3: Rotate — destroy the old jti immediately so it can never be used again
+   
     await redis.del(`rt:${jti}`);
 
-    // Step 4: Issue brand new access + refresh tokens and register the new jti
+   
     const newTokens = jwToken.jwtToken(id, username);
     await redis.set(`rt:${newTokens.jti}`, id, 'EX', 7 * 24 * 60 * 60);
 
@@ -528,7 +528,6 @@ function verify_email(email) {
     return emailRegex.test(email);
 }
 
-// Signup — direct account creation, no OTP
 router.post('/signup-request', async (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
     if (await checkRateLimit(`signup:${ip}`, 5, 60)) {
@@ -558,7 +557,6 @@ router.post('/signup-request', async (req, res, next) => {
     }
 });
 
-// Keep verify-otp route alive to avoid breaking anything, just return success
 router.post('/verify-otp', (req, res) => {
     res.status(200).json({ message: 'Account created successfully' });
 });
@@ -588,7 +586,6 @@ router.post('/login/forgot-password', async (req, res, next) => {
     }
 });
 
-// Step 2: Verify OTP for password reset
 router.post('/verify-reset-otp', async (req, res, next) => {
     const { email, otp } = req.body;
 
@@ -604,13 +601,12 @@ router.post('/verify-reset-otp', async (req, res, next) => {
         return res.status(400).json({ message: 'Password reset session expired. Please try again.' });
     }
 
-    // Proof that OTP was completed — /reset-password checks this before allowing the update
+   
     await redis.set(`reset-verified:${email}`, '1', 'EX', 300);
 
     return res.status(200).json({ message: 'OTP verified successfully. You can now reset your password.' });
 });
 
-// Step 3: Reset password after OTP verification
 router.post('/reset-password', async (req, res, next) => {
     const { email, newPassword, confirmPassword } = req.body;
     
@@ -628,7 +624,7 @@ router.post('/reset-password', async (req, res, next) => {
     }
 
     try {
-        // Check if user exists
+       
         const userQuery = 'SELECT * FROM users WHERE email = $1';
         const userResult = await pool.query(userQuery, [email]);
         
@@ -654,7 +650,6 @@ router.post('/reset-password', async (req, res, next) => {
 
 
 
-// Get profile
 router.get('/profile', authenticateToken, async (req, res, next) => {
     try {
         const result = await pool.query(
@@ -685,7 +680,6 @@ router.get('/me', authenticateToken, (req, res) => {
     res.json({ id: req.user.id, username: req.user.username });
 });
 
-// Update profile (username and/or email)
 router.put('/profile', authenticateToken, async (req, res, next) => {
     let { username, email } = req.body;
     const userId = req.user.id;
@@ -702,7 +696,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     }
 
     try {
-        // Check for conflicts with other users
+       
         const conflict = await pool.query(
             'SELECT id FROM users WHERE (username = $1 OR email = $2) AND id != $3',
             [username, email, userId]
@@ -726,7 +720,6 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     }
 });
 
-// Change password (requires current password)
 router.post('/change-password', authenticateToken, async (req, res, next) => {
     const { currentPassword, newPassword, confirmPassword } = req.body;
     const userId = req.user.id;
@@ -760,18 +753,17 @@ router.post('/change-password', authenticateToken, async (req, res, next) => {
     }
 });
 
-// Logout — blacklist the access token, cleanly delete the refresh token's jti
 router.get('/logout', async (req, res, next) => {
     const accessToken = req.cookies.accessToken;
     const refreshToken = req.cookies.refreshToken;
 
-    // Access token: blacklist it for the remaining 15 minutes of its life
-    // (it has no jti — blacklisting the full string is correct here)
+   
+   
     if (accessToken) {
         await redis.set(`blacklist:${accessToken}`, '1', 'EX', 15 * 60);
     }
 
-    // Refresh token: just delete its jti from Redis — clean, no TTL juggling needed
+   
     if (refreshToken) {
         try {
             const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || 'refresh_secret');
@@ -779,7 +771,7 @@ router.get('/logout', async (req, res, next) => {
                 await redis.del(`rt:${payload.jti}`);
             }
         } catch (err) {
-            // Token already expired — nothing to clean up in Redis
+           
         }
     }
 
