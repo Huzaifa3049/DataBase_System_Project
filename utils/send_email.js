@@ -42,9 +42,9 @@ async function send_and_generate_OTP(email) {
 
     try {
         const sendPromise = resend.emails.send({
-            from: 'Lumen <onboarding@resend.dev>',
+            from: 'GitWrite <onboarding@resend.dev>',
             to: email,
-            subject: 'Your Lumen verification code',
+            subject: 'Your GitWrite verification code',
             text: `Your verification code is: ${otp}\n\nThis code expires in 5 minutes.`,
         });
         const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout after 10s')), 10000));

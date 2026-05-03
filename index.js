@@ -75,7 +75,7 @@ app.get('/', (req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lumen — Where Ideas Find Light</title>
+<title>GitWrite — Where Ideas Find Light</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
@@ -120,7 +120,7 @@ a{color:inherit;text-decoration:none}
 </head>
 <body>
 <nav class="nav">
-  <div class="brand"><div class="brand-mark">L</div><span>Lumen</span></div>
+  <div class="brand"><div class="brand-mark">L</div><span>GitWrite</span></div>
   <div class="nav-actions">
     <a href="/api/auth/login"><button class="btn-ghost">Sign In</button></a>
     <a href="/api/auth/signup"><button class="btn-accent">Get Started</button></a>
@@ -129,7 +129,7 @@ a{color:inherit;text-decoration:none}
 <section class="hero">
   <div class="eyebrow">A space for thoughtful writing</div>
   <h1>Where ideas <em>find light</em></h1>
-  <p>Lumen is a platform for writers who care about craft. Publish stories, follow voices you love, and build a reading life that matters.</p>
+  <p>GitWrite is a platform for writers who care about craft. Publish stories, follow voices you love, and build a reading life that matters.</p>
   <div class="cta-row">
     <a href="/api/auth/signup"><button class="cta-primary">Start writing — it's free</button></a>
     <a href="/api/auth/login"><button class="cta-secondary">Sign in</button></a>
@@ -140,7 +140,7 @@ a{color:inherit;text-decoration:none}
   <div class="feat"><div class="feat-icon">🔖</div><h3>Save &amp; organize</h3><p>Bookmark stories to read later. Your saved list, always in sync.</p></div>
   <div class="feat"><div class="feat-icon">👥</div><h3>Follow writers</h3><p>Subscribe to authors you love and never miss a new story in your feed.</p></div>
 </section>
-<footer class="footer">© ${new Date().getFullYear()} Lumen. Built for writers.</footer>
+<footer class="footer">© ${new Date().getFullYear()} GitWrite. Built for writers.</footer>
 </body>
 </html>`);
 });

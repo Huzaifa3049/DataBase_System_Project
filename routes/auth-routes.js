@@ -20,7 +20,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
     cloudinary,
     params: {
-        folder: 'lumen-avatars',
+        folder: 'gitwrite-avatars',
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
         transformation: [{ width: 300, height: 300, crop: 'fill' }],
     },
@@ -46,7 +46,7 @@ const HTML_LOGIN = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign In — Lumen</title>
+<title>Sign In — GitWrite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
@@ -86,7 +86,7 @@ h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;t
 </head>
 <body>
 <div class="card">
-  <div class="brand"><div class="brand-mark">L</div><span>Lumen</span></div>
+  <div class="brand"><div class="brand-mark">L</div><span>GitWrite</span></div>
   <h2>Welcome back</h2>
   <p class="sub">Sign in to your account</p>
   <form id="loginForm" onsubmit="handleLogin(event)">
@@ -134,7 +134,7 @@ const HTML_SIGNUP = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Create Account — Lumen</title>
+<title>Create Account — GitWrite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
@@ -181,10 +181,10 @@ h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;t
 </head>
 <body>
 <div class="card">
-  <div class="brand"><div class="brand-mark">L</div><span>Lumen</span></div>
+  <div class="brand"><div class="brand-mark">L</div><span>GitWrite</span></div>
   <div id="signupStep1">
     <h2>Create account</h2>
-    <p class="sub">Join Lumen and start writing</p>
+    <p class="sub">Join GitWrite and start writing</p>
     <form id="signupStep1Form" onsubmit="handleSignupStep1(event)">
       <div class="field"><label>Username</label><input type="text" id="signupUsername" placeholder="your_username" required autocomplete="username" /></div>
       <div class="field"><label>Email</label><input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email" /></div>
@@ -246,7 +246,7 @@ const HTML_FORGOT_PASSWORD = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reset Password — Lumen</title>
+<title>Reset Password — GitWrite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
@@ -292,7 +292,7 @@ h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;t
 </head>
 <body>
 <div class="card">
-  <div class="brand"><div class="brand-mark">L</div><span>Lumen</span></div>
+  <div class="brand"><div class="brand-mark">L</div><span>GitWrite</span></div>
   <div class="step-dots">
     <div class="dot active" id="dot1"></div>
     <div class="dot" id="dot2"></div>
